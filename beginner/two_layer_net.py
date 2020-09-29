@@ -5,6 +5,7 @@ import torch.optim as optim
 
 
 class TwoLayerNet(nn.Module):
+    """包含两个全连接层的前馈神经网络"""
 
     def __init__(self, D_in, H, D_out):
         """
