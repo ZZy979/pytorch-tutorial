@@ -1,6 +1,7 @@
 """参考：<https://pytorch.org/tutorials/beginner/pytorch_with_examples.html>"""
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 
 
@@ -12,8 +13,8 @@ class TwoLayerNet(nn.Module):
         In the constructor we instantiate two nn.Linear modules and assign them as member variables.
         """
         super().__init__()
-        self.linear1 = torch.nn.Linear(D_in, H)
-        self.linear2 = torch.nn.Linear(H, D_out)
+        self.linear1 = nn.Linear(D_in, H)
+        self.linear2 = nn.Linear(H, D_out)
 
     def forward(self, x):
         """
@@ -21,9 +22,7 @@ class TwoLayerNet(nn.Module):
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
-        h_relu = self.linear1(x).clamp(min=0)
-        y_pred = self.linear2(h_relu)
-        return y_pred
+        return self.linear2(F.relu(self.linear1(x)))
 
 
 # N is batch size; D_in is input dimension;
