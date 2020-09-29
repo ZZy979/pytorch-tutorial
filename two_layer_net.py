@@ -3,6 +3,28 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+
+class TwoLayerNet(nn.Module):
+
+    def __init__(self, D_in, H, D_out):
+        """
+        In the constructor we instantiate two nn.Linear modules and assign them as member variables.
+        """
+        super().__init__()
+        self.linear1 = torch.nn.Linear(D_in, H)
+        self.linear2 = torch.nn.Linear(H, D_out)
+
+    def forward(self, x):
+        """
+        In the forward function we accept a Tensor of input data and we must return
+        a Tensor of output data. We can use Modules defined in the constructor as
+        well as arbitrary operators on Tensors.
+        """
+        h_relu = self.linear1(x).clamp(min=0)
+        y_pred = self.linear2(h_relu)
+        return y_pred
+
+
 # N is batch size; D_in is input dimension;
 # H is hidden dimension; D_out is output dimension.
 N, D_in, H, D_out = 64, 1000, 100, 10
@@ -11,36 +33,24 @@ N, D_in, H, D_out = 64, 1000, 100, 10
 x = torch.randn(N, D_in)
 y = torch.randn(N, D_out)
 
-# Use the nn package to define our model and loss function.
-model = nn.Sequential(
-    torch.nn.Linear(D_in, H),
-    torch.nn.ReLU(),
-    torch.nn.Linear(H, D_out),
-)
-loss_fn = nn.MSELoss(reduction='sum')
+# Construct our model by instantiating the class defined above
+model = TwoLayerNet(D_in, H, D_out)
 
-# Use the optim package to define an Optimizer that will update the weights of the model for us.
-# Here we will use Adam; the optim package contains many other optimization algorithms.
-# The first argument to the Adam constructor tells the optimizer which Tensors it should update.
-learning_rate = 1e-4
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+# Construct our loss function and an Optimizer. The call to model.parameters()
+# in the SGD constructor will contain the learnable parameters of the two
+# nn.Linear modules which are members of the model.
+criterion = nn.MSELoss(reduction='sum')
+optimizer = optim.SGD(model.parameters(), lr=1e-4)
 for t in range(500):
     # Forward pass: compute predicted y by passing x to the model.
     y_pred = model(x)
 
     # Compute and print loss.
-    loss = loss_fn(y_pred, y)
+    loss = criterion(y_pred, y)
     if t % 100 == 99:
         print(t, loss.item())
 
-    # Before the backward pass, use the optimizer object to zero all of the
-    # gradients for the variables it will update (which are the learnable weights of the model).
-    # This is because by default, gradients are accumulated in buffers (i.e, not overwritten)
-    # whenever .backward() is called. Checkout docs of torch.autograd.backward for more details.
+    # Zero gradients, perform a backward pass, and update the weights.
     optimizer.zero_grad()
-
-    # Backward pass: compute gradient of the loss with respect to model parameters
     loss.backward()
-
-    # Calling the step function on an Optimizer makes an update to its parameters
     optimizer.step()
