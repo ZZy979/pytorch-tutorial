@@ -33,18 +33,7 @@ class RGCN(nn.Module):
         return h
 
 
-def evaluate(model, graph, features, labels, mask):
-    model.eval()
-    with torch.no_grad():
-        logits = model(graph, features)['user']
-        logits = logits[mask]
-        labels = labels[mask]
-        _, indices = torch.max(logits, dim=1)
-        correct = torch.sum(indices == labels)
-        return correct.item() * 1.0 / len(labels)
-
-
-def main():
+def build_user_item_graph():
     # 异构图示例：https://docs.dgl.ai/guide/training.html#heterogeneous-graphs
     n_users = 1000
     n_items = 500
@@ -70,29 +59,28 @@ def main():
         ('user', 'dislike', 'item'): (dislike_src, dislike_dst),
         ('item', 'disliked-by', 'user'): (dislike_dst, dislike_src)
     })
-
     g.nodes['user'].data['feature'] = torch.randn(n_users, n_hetero_features)
     g.nodes['item'].data['feature'] = torch.randn(n_items, n_hetero_features)
     g.nodes['user'].data['label'] = torch.randint(0, n_user_classes, (n_users,))
     g.edges['click'].data['label'] = torch.randint(1, n_max_clicks, (n_clicks,)).float()
+    # randomly generate training masks on user nodes and click edges
+    g.nodes['user'].data['train_mask'] = torch.zeros(n_users, dtype=torch.bool).bernoulli(0.6)
+    g.edges['click'].data['train_mask'] = torch.zeros(n_clicks, dtype=torch.bool).bernoulli(0.6)
+    return g
 
+
+def main():
+    g = build_user_item_graph()
     user_feats = g.nodes['user'].data['feature']
     item_feats = g.nodes['item'].data['feature']
     node_features = {'user': user_feats, 'item': item_feats}
     labels = g.nodes['user'].data['label']
+    train_mask = g.nodes['user'].data['train_mask']
 
-    idx = np.arange(n_users)
-    np.random.shuffle(idx)
-    n_train = int(n_users * 0.6)
-    n_valid = int(n_users * 0.2)
-    train_mask = torch.zeros(n_users, dtype=torch.bool)
-    train_mask[idx[:n_train]] = True
-    valid_mask = torch.zeros(n_users, dtype=torch.bool)
-    valid_mask[idx[n_train:n_train + n_valid]] = True
-    test_mask = torch.zeros(n_users, dtype=torch.bool)
-    test_mask[idx[n_train + n_valid:]] = True
-
-    model = RGCN(n_hetero_features, 20, n_user_classes, g.etypes)
+    model = RGCN(
+        g.nodes['user'].data['feature'].shape[1], 20,
+        g.nodes['user'].data['label'].max().item() + 1, g.etypes
+    )
     opt = optim.Adam(model.parameters())
 
     for epoch in range(5):
@@ -101,15 +89,12 @@ def main():
         logits = model(g, node_features)['user']
         # compute loss
         loss = F.cross_entropy(logits[train_mask], labels[train_mask])
-        # compute validation accuracy
-        acc = evaluate(model, g, node_features, labels, valid_mask)
+        # compute validation accuracy, omitted in this example
         # backward propagation
         opt.zero_grad()
         loss.backward()
         opt.step()
-        print('Epoch {:d} | Loss {:.4f} | Accuracy {:.2%}'.format(epoch + 1, loss.item(), acc))
-    acc = evaluate(model, g, node_features, labels, test_mask)
-    print('Test accuracy {:.4f}'.format(acc))
+        print(loss.item())
 
 
 if __name__ == '__main__':
