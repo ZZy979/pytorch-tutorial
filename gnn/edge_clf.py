@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 
 from gnn.node_clf import SAGE
 
@@ -58,23 +59,23 @@ def main():
     src = np.random.randint(0, 100, 500)
     dst = np.random.randint(0, 100, 500)
     # make it symmetric
-    edge_pred_graph = dgl.graph((np.concatenate([src, dst]), np.concatenate([dst, src])))
+    g = dgl.graph((np.concatenate([src, dst]), np.concatenate([dst, src])))
     # synthetic node and edge features, as well as edge labels
-    edge_pred_graph.ndata['feature'] = torch.randn(100, 10)
-    edge_pred_graph.edata['feature'] = torch.randn(1000, 10)
-    edge_pred_graph.edata['label'] = torch.randn(1000)
+    g.ndata['feature'] = torch.randn(100, 10)
+    g.edata['feature'] = torch.randn(1000, 10)
+    g.edata['label'] = torch.randn(1000)
     # synthetic train-validation-test splits
-    edge_pred_graph.edata['train_mask'] = torch.zeros(1000, dtype=torch.bool).bernoulli(0.6)
+    g.edata['train_mask'] = torch.zeros(1000, dtype=torch.bool).bernoulli(0.6)
 
-    node_features = edge_pred_graph.ndata['feature']
-    edge_label = edge_pred_graph.edata['label']
-    train_mask = edge_pred_graph.edata['train_mask']
+    node_features = g.ndata['feature']
+    edge_label = g.edata['label']
+    train_mask = g.edata['train_mask']
     model = Model(10, 20, 5)
-    opt = torch.optim.Adam(model.parameters())
+    opt = optim.Adam(model.parameters())
 
     for epoch in range(30):
-        pred = model(edge_pred_graph, node_features)
-        loss = F.mse_loss(pred[train_mask], edge_label[train_mask])
+        pred = model(g, node_features)
+        loss = F.mse_loss(pred[train_mask][:, 0], edge_label[train_mask])
         opt.zero_grad()
         loss.backward()
         opt.step()
