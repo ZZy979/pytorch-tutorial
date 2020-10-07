@@ -58,18 +58,15 @@ def main():
     user_feats = g.nodes['user'].data['feature']
     item_feats = g.nodes['item'].data['feature']
     node_features = {'user': user_feats, 'item': item_feats}
-    labels = g.edges['click'].data['label']
+    labels = g.edges['click'].data['label'].float()
     train_mask = g.edges['click'].data['train_mask']
 
-    model = Model(
-        g.nodes['user'].data['feature'].shape[1], 20,
-        g.nodes['user'].data['label'].max().item() + 1, g.etypes
-    )
+    model = Model(user_feats.shape[1], 20, 5, g.etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):
         pred = model(g, node_features, 'click')
-        loss = F.mse_loss(pred[train_mask], labels[train_mask])
+        loss = F.mse_loss(pred[train_mask][:, 0], labels[train_mask])
         opt.zero_grad()
         loss.backward()
         opt.step()

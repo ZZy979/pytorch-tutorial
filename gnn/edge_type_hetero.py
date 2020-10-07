@@ -31,13 +31,13 @@ class HeteroMLPPredictor(nn.Module):
 
 class Model(nn.Module):
 
-    def __init__(self, in_features, hidden_features, out_features, rel_names):
+    def __init__(self, in_features, hidden_features, out_features, out_classes, rel_names):
         super().__init__()
-        self.sage = RGCN(in_features, hidden_features, out_features, rel_names)
-        self.pred = HeteroMLPPredictor(out_features, len(rel_names))
+        self.rgcn = RGCN(in_features, hidden_features, out_features, rel_names)
+        self.pred = HeteroMLPPredictor(out_features, out_classes)
 
     def forward(self, g, x, dec_graph):
-        h = self.sage(g, x)
+        h = self.rgcn(g, x)
         return self.pred(dec_graph, h)
 
 
@@ -48,11 +48,9 @@ def main():
     node_features = {'user': user_feats, 'item': item_feats}
     dec_graph = g['user', :, 'item']
     edge_label = dec_graph.edata[dgl.ETYPE]
+    edge_label -= edge_label.min().item()
 
-    model = Model(
-        g.nodes['user'].data['feature'].shape[1], 20,
-        g.nodes['user'].data['label'].max().item() + 1, g.etypes
-    )
+    model = Model(user_feats.shape[1], 20, 5, 2, g.etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):

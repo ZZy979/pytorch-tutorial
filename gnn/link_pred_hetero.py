@@ -42,7 +42,7 @@ def main():
     node_features = {'user': user_feats, 'item': item_feats}
     k = 5
 
-    model = Model(10, 20, 5, hetero_graph.etypes)
+    model = Model(user_feats.shape[1], 20, 5, hetero_graph.etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):
