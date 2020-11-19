@@ -38,9 +38,9 @@ def train(args):
     ndata = g[0].ndata if dataset == 'ACM' else g.nodes['paper'].data
     features = ndata['feat']
     labels = ndata['label']
-    train_mask = ndata['train_mask'].type(torch.bool)
-    val_mask = ndata['val_mask'].type(torch.bool)
-    test_mask = ndata['test_mask'].type(torch.bool)
+    train_mask = ndata['train_mask']
+    val_mask = ndata['val_mask']
+    test_mask = ndata['test_mask']
 
     heads = [args.num_heads] * args.num_layers
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'

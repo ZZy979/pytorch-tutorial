@@ -39,6 +39,10 @@ class ACM3025Dataset(DGLDataset):
 
     def load(self):
         self.gs, _ = load_graphs(self._cache_file)
+        # save_graphs会将bool转换成uint8
+        for g in self.gs:
+            for k in ('train_mask', 'val_mask', 'test_mask'):
+                g.ndata[k] = g.ndata[k].type(torch.bool)
 
     def process(self):
         with open(self._raw_file, 'rb') as f:
@@ -114,6 +118,8 @@ class ACMDataset(DGLDataset):
     def load(self):
         graphs, _ = load_graphs(self._cache_file)
         self.g = graphs[0]
+        for k in ('train_mask', 'val_mask', 'test_mask'):
+            self.g.nodes['paper'].data[k] = self.g.nodes['paper'].data[k].type(torch.bool)
 
     def process(self):
         data = sio.loadmat(self._raw_file)
