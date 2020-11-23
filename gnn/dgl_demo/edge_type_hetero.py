@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.dgl_demo.node_clf_hetero import RGCN, build_user_item_graph
 
 
 class HeteroMLPPredictor(nn.Module):
