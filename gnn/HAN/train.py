@@ -4,7 +4,9 @@ import torch
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
 
-from gnn.HAN.utils import set_random_seed, load_data
+from gnn.HAN.model import HAN
+from gnn.HAN.model_hetero import HANHetero
+from gnn.HAN.utils import set_random_seed, load_data, load_hetero_data
 
 
 def score(logits, labels):
@@ -29,43 +31,28 @@ def evaluate(model, g, features, labels, mask, loss_func):
 
 def train(args):
     set_random_seed(args.seed)
-
-    # If args.hetero is True, g would be a heterogeneous graph
-    # Otherwise, it will be two homogeneous graphs
-    dataset = 'ACMRaw' if args.hetero else 'ACM'
-    data = load_data(dataset)
-    g = data[0]
-    ndata = g[0].ndata if dataset == 'ACM' else g.nodes['paper'].data
-    features = ndata['feat']
-    labels = ndata['label']
-    train_mask = ndata['train_mask']
-    val_mask = ndata['val_mask']
-    test_mask = ndata['test_mask']
-
     heads = [args.num_heads] * args.num_layers
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     if args.hetero:
-        from gnn.HAN.model_hetero import HAN
-        model = HAN(
-            meta_paths=[['pa', 'ap'], ['pf', 'fp']],
+        g, meta_paths, features, labels, num_classes, train_mask, val_mask, test_mask = \
+            load_hetero_data(args.dataset)
+        model = HANHetero(
+            meta_paths=meta_paths,
             in_size=features.shape[1],
             hidden_size=args.num_hidden,
-            out_size=data.num_classes,
+            out_size=num_classes,
             num_heads=heads,
             dropout=args.dropout
-        ).to(device)
-        g = g.to(device)
+        )
     else:
-        from gnn.HAN.model import HAN
+        g, features, labels, num_classes, train_mask, val_mask, test_mask = load_data(args.dataset)
         model = HAN(
             num_meta_paths=len(g),
             in_size=features.shape[1],
             hidden_size=args.num_hidden,
-            out_size=data.num_classes,
+            out_size=num_classes,
             num_heads=heads,
             dropout=args.dropout
-        ).to(device)
-        g = [graph.to(device) for graph in g]
+        )
 
     loss_fcn = F.cross_entropy
     optimizer = torch.optim.Adam(
@@ -84,10 +71,13 @@ def train(args):
         val_loss, val_acc, val_micro_f1, val_macro_f1 = evaluate(
             model, g, features, labels, val_mask, loss_fcn
         )
-        print('Epoch {:d} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
-              'Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
-            epoch + 1, loss.item(), train_micro_f1, train_macro_f1, val_loss.item(), val_micro_f1,
-            val_macro_f1))
+        print(
+            'Epoch {:d} | Train Loss {:.4f} | Train Micro f1 {:.4f} | Train Macro f1 {:.4f} | '
+            'Val Loss {:.4f} | Val Micro f1 {:.4f} | Val Macro f1 {:.4f}'.format(
+                epoch + 1, loss.item(), train_micro_f1, train_macro_f1,
+                val_loss.item(), val_micro_f1, val_macro_f1
+            )
+        )
 
     test_loss, test_acc, test_micro_f1, test_macro_f1 = evaluate(
         model, g, features, labels, test_mask, loss_fcn
@@ -100,6 +90,7 @@ def train(args):
 def main():
     parser = argparse.ArgumentParser('HAN')
     parser.add_argument('--seed', type=int, default=1, help='Random seed')
+    parser.add_argument('--dataset', choices=['ACM', 'DBLP'], default='ACM', help='dataset')
     parser.add_argument('--hetero', action='store_true',
                         help='Use metapath coalescing with DGL\'s own dataset')
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
