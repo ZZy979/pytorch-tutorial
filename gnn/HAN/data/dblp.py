@@ -72,8 +72,9 @@ class DBLPFourAreaDataset(DGLDataset):
     def load(self):
         graphs, _ = dgl.load_graphs(self._cache_file)
         self.g = graphs[0]
-        for k in ('train_mask', 'val_mask', 'test_mask'):
-            self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
+        for ntype in ('author', 'paper'):
+            for k in ('train_mask', 'val_mask', 'test_mask'):
+                self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
 
     def process(self):
         author_labels = self.read_author()
