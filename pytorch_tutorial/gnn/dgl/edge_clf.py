@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.dgl_demo.node_clf import SAGE
+from pytorch_tutorial.gnn.dgl.node_clf import SAGE
 
 
 class DotProductPredictor(nn.Module):

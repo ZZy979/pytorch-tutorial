@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from dgl.nn.pytorch import GATConv
 
-from gnn.HAN.model import SemanticAttention
+from pytorch_tutorial.gnn.han.model import SemanticAttention
 
 
 class HANLayer(nn.Module):

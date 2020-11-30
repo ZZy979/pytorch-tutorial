@@ -4,9 +4,9 @@ import torch
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
 
-from gnn.HAN.model import HAN
-from gnn.HAN.model_hetero import HANHetero
-from gnn.HAN.utils import set_random_seed, load_data, load_hetero_data
+from pytorch_tutorial.gnn.han.model import HAN
+from pytorch_tutorial.gnn.han.model_hetero import HANHetero
+from pytorch_tutorial.gnn.han.utils import set_random_seed, load_data, load_hetero_data
 
 
 def score(logits, labels):

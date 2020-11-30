@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 
-from gnn.HAN.data import ACMDataset, ACM3025Dataset, DBLPFourAreaDataset, DBLP4057Dataset
+from pytorch_tutorial.gnn.data import ACMDataset, ACM3025Dataset, DBLPFourAreaDataset, DBLP4057Dataset
 
 
 def set_random_seed(seed):

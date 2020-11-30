@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from dgl.data import CoraGraphDataset, CiteseerGraphDataset, PubmedGraphDataset, register_data_args
 
-from gnn.GAT.model import GAT
+from pytorch_tutorial.gnn.gat.model import GAT
 
 
 def get_dataset(name):
