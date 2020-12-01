@@ -2,7 +2,9 @@ dgl==0.5.2
 gensim==3.8.3
 matplotlib==3.3.1
 networkx==2.5
+nltk==3.5
 numpy==1.18.4
+pandas==1.1.1
 scikit-learn==0.23.1
 scipy==1.4.1
 torch==1.6.0

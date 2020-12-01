@@ -89,7 +89,7 @@ def train(args):
 
 def main():
     parser = argparse.ArgumentParser('HAN')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed')
+    parser.add_argument('--seed', type=int, default=1, help='random seed')
     parser.add_argument('--dataset', choices=['ACM', 'DBLP'], default='ACM', help='dataset')
     parser.add_argument('--hetero', action='store_true',
                         help='Use metapath coalescing with DGL\'s own dataset')

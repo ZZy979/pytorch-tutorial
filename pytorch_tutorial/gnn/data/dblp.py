@@ -1,24 +1,16 @@
 import os
-from collections import Counter
 
 import dgl
+import numpy as np
+import pandas as pd
 import scipy.io as sio
 import torch
 from dgl.data import DGLDataset
 from dgl.data.utils import makedirs, download, generate_mask_tensor, idx2mask
-from gensim.parsing.preprocessing import STOPWORDS
-
-
-def split_idx(labels, train_size, val_size):
-    count = Counter(labels.tolist())
-    train_idx, val_idx, test_idx = [], [], []
-    for c, n in count.items():
-        n_train, n_val = int(n * train_size), int(n * val_size)
-        idx = torch.nonzero(labels == c, as_tuple=False).squeeze(1).tolist()
-        train_idx.extend(idx[:n_train])
-        val_idx.extend(idx[n_train:n_train + n_val])
-        test_idx.extend(idx[n_train + n_val:])
-    return train_idx, val_idx, test_idx
+from nltk import WordNetLemmatizer
+from nltk.corpus import stopwords as nltk_stopwords
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as sklearn_stopwords
+from sklearn.model_selection import train_test_split
 
 
 class DBLPFourAreaDataset(DGLDataset):
@@ -26,45 +18,46 @@ class DBLPFourAreaDataset(DGLDataset):
 
     统计数据
     -----
-    * 顶点：4057 author, 14376 paper, 20 conf, 8718 term
-    * 边：19645 paper-author, 14376 paper-conf, 85825 paper-term
+    * 顶点：4057 author, 14328 paper, 20 conf, 7723 term
+    * 边：19645 paper-author, 14328 paper-conf, 85810 paper-term
 
     属性
     -----
     * num_classes: 类别数(4)
-    * author_name, paper_name, conf_name, term_name: List[str]，分别为每种顶点的名字
+    * meta_paths: 使用的元路径
 
     author顶点属性
     -----
-    * feat: tensor(4057, 331)，关键词的词袋表示
+    * feat: tensor(4057, 334)，关键词的词袋表示（来自HAN作者预处理的数据集）
     * label: tensor(4057)，类别为0~3 (0: DB, 1: DM, 2: AI, 3: IR)
-    * train_mask, val_mask, test_mask: tensor(4057)，True的数量分别为810, 403, 2844
-
-    paper顶点属性
-    -----
-    * feat: tensor(14376, 331)，关键词的词袋表示
-    * label: tensor(14376)，类别为0~3
-    * train_mask, val_mask, test_mask: tensor(14376)，True的数量分别为2873, 1436, 10067
+    * train_mask, val_mask, test_mask: tensor(4057)，True的数量分别为800, 400, 2857
 
     conf顶点属性
     -----
     * label: tensor(20)，类别为0~3
     """
-    files = [
+    raw_files = [
         'readme.txt', 'author_label.txt', 'paper.txt', 'conf_label.txt', 'term.txt',
         'paper_author.txt', 'paper_conf.txt', 'paper_term.txt'
     ]
+    seed = 42
 
-    def __init__(self):
+    def __init__(self, raw_dir=None, save_dir=None, force_reload=False, verbose=False):
         super().__init__(
-            'DBLP_four_area', 'https://github.com/Jhy1993/HAN/raw/master/data/DBLP_four_area/'
+            'DBLP_four_area', 'https://github.com/Jhy1993/HAN/raw/master/data/DBLP_four_area/',
+            raw_dir, save_dir, force_reload=force_reload, verbose=verbose
         )
 
     def download(self):
         if not os.path.exists(self.raw_path):
             makedirs(self.raw_path)
-        for file in self.files:
-            download(self.url + file, os.path.join(self.raw_path, file))
+        for file in self.raw_files:
+            if not os.path.exists(os.path.join(self.raw_path, file)):
+                download(self.url + file, os.path.join(self.raw_path, file))
+        if not os.path.exists(self._raw_file2):
+            raise FileNotFoundError('请手动下载文件 {} 提取码：6b3h 并保存为 {}'.format(
+                self.url, self._raw_file2
+            ))
 
     def save(self):
         dgl.save_graphs(self._cache_file, [self.g])
@@ -72,20 +65,89 @@ class DBLPFourAreaDataset(DGLDataset):
     def load(self):
         graphs, _ = dgl.load_graphs(self._cache_file)
         self.g = graphs[0]
-        for ntype in ('author', 'paper'):
-            for k in ('train_mask', 'val_mask', 'test_mask'):
-                self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
+        for k in ('train_mask', 'val_mask', 'test_mask'):
+            self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
 
     def process(self):
-        author_labels = self.read_author()
-        conf_labels = self.read_conf()
-        self.read_papers()
-        self.read_terms()
+        self.authors, self.papers, self.confs, self.terms, \
+            self.paper_author, self.paper_conf, self.paper_term = self._read_raw_data()
+        self._filter_nodes_and_edges()
+        self._lemmatize_terms()
+        self._remove_stopwords()
+        self._reset_index()
 
-        pa_p, pa_a = self.read_edge('paper_author.txt', self.paper_id, self.author_id)
-        pc_p, pc_c = self.read_edge('paper_conf.txt', self.paper_id, self.conf_id)
-        pt_p, pt_t = self.read_edge('paper_term.txt', self.paper_id, self.term_id)
-        self.g = dgl.heterograph({
+        self.g = self._build_graph()
+        self._add_ndata()
+
+    def _read_file(self, filename, names, index_col=None, encoding='utf8'):
+        return pd.read_csv(
+            os.path.join(self.raw_path, filename), sep='\t', names=names, index_col=index_col,
+            keep_default_na=False, encoding=encoding
+        )
+
+    def _read_raw_data(self):
+        authors = self._read_file('author_label.txt', names=['id', 'label', 'name'], index_col='id')
+        papers = self._read_file('paper.txt', names=['id', 'title'], index_col='id', encoding='cp1252')
+        confs = self._read_file('conf_label.txt', names=['id', 'label', 'name', 'dummy'], index_col='id')
+        terms = self._read_file('term.txt', names=['id', 'name'], index_col='id')
+        paper_author = self._read_file('paper_author.txt', names=['paper_id', 'author_id'])
+        paper_conf = self._read_file('paper_conf.txt', names=['paper_id', 'conf_id'])
+        paper_term = self._read_file('paper_term.txt', names=['paper_id', 'term_id'])
+        return authors, papers, confs, terms, paper_author, paper_conf, paper_term
+
+    def _filter_nodes_and_edges(self):
+        """过滤掉不与学者关联的顶点和边"""
+        self.paper_author = self.paper_author[self.paper_author['author_id'].isin(self.authors.index)]
+        paper_ids = self.paper_author['paper_id'].drop_duplicates()
+        self.papers = self.papers.loc[paper_ids]
+        self.paper_conf = self.paper_conf[self.paper_conf['paper_id'].isin(paper_ids)]
+        self.paper_term = self.paper_term[self.paper_term['paper_id'].isin(paper_ids)]
+        self.terms = self.terms.loc[self.paper_term['term_id'].drop_duplicates()]
+
+    def _lemmatize_terms(self):
+        """对关键词进行词形还原并去重"""
+        lemmatizer = WordNetLemmatizer()
+        lemma_id_map, term_lemma_map = {}, {}
+        for index, row in self.terms.iterrows():
+            lemma = lemmatizer.lemmatize(row['name'])
+            term_lemma_map[index] = lemma_id_map.setdefault(lemma, index)
+        self.terms = pd.DataFrame(
+            list(lemma_id_map.keys()), columns=['name'],
+            index=pd.Index(lemma_id_map.values(), name='id')
+        )
+        self.paper_term.loc[:, 'term_id'] = [
+            term_lemma_map[row['term_id']] for _, row in self.paper_term.iterrows()
+        ]
+        self.paper_term.drop_duplicates(inplace=True)
+
+    def _remove_stopwords(self):
+        """删除关键词中的停止词"""
+        stop_words = sklearn_stopwords.union(nltk_stopwords.words('english'))
+        self.terms = self.terms[~(self.terms['name'].isin(stop_words))]
+        self.paper_term = self.paper_term[self.paper_term['term_id'].isin(self.terms.index)]
+
+    def _reset_index(self):
+        """将顶点id重置为0~n-1"""
+        self.authors.reset_index(inplace=True)
+        self.papers.reset_index(inplace=True)
+        self.confs.reset_index(inplace=True)
+        self.terms.reset_index(inplace=True)
+        author_id_map = {row['id']: index for index, row in self.authors.iterrows()}
+        paper_id_map = {row['id']: index for index, row in self.papers.iterrows()}
+        conf_id_map = {row['id']: index for index, row in self.confs.iterrows()}
+        term_id_map = {row['id']: index for index, row in self.terms.iterrows()}
+
+        self.paper_author.loc[:, 'author_id'] = [author_id_map[i] for i in self.paper_author['author_id'].to_list()]
+        self.paper_conf.loc[:, 'conf_id'] = [conf_id_map[i] for i in self.paper_conf['conf_id'].to_list()]
+        self.paper_term.loc[:, 'term_id'] = [term_id_map[i] for i in self.paper_term['term_id'].to_list()]
+        for df in (self.paper_author, self.paper_conf, self.paper_term):
+            df.loc[:, 'paper_id'] = [paper_id_map[i] for i in df['paper_id']]
+
+    def _build_graph(self):
+        pa_p, pa_a = self.paper_author['paper_id'].to_list(), self.paper_author['author_id'].to_list()
+        pc_p, pc_c = self.paper_conf['paper_id'].to_list(), self.paper_conf['conf_id'].to_list()
+        pt_p, pt_t = self.paper_term['paper_id'].to_list(), self.paper_term['term_id'].to_list()
+        return dgl.heterograph({
             ('paper', 'pa', 'author'): (pa_p, pa_a),
             ('author', 'ap', 'paper'): (pa_a, pa_p),
             ('paper', 'pc', 'conf'): (pc_p, pc_c),
@@ -94,84 +156,19 @@ class DBLPFourAreaDataset(DGLDataset):
             ('term', 'tp', 'paper'): (pt_t, pt_p)
         })
 
-        selected_terms = torch.nonzero(self.g.in_degrees(etype='pt') >= 50, as_tuple=False).squeeze(1)
-        author_term_adj = self.g.adj(etype='ap').to_dense() @ self.g.adj(etype='pt').to_dense()
-        author_train_idx, author_val_idx, author_test_idx = split_idx(author_labels, 0.2, 0.1)
-        n_authors = len(self.author_id)
-        self.g.nodes['author'].data['feat'] = author_term_adj[:, selected_terms]
-        self.g.nodes['author'].data['label'] = author_labels
-        self.g.nodes['author'].data['train_mask'] = generate_mask_tensor(idx2mask(author_train_idx, n_authors))
-        self.g.nodes['author'].data['val_mask'] = generate_mask_tensor(idx2mask(author_val_idx, n_authors))
-        self.g.nodes['author'].data['test_mask'] = generate_mask_tensor(idx2mask(author_test_idx, n_authors))
+    def _add_ndata(self):
+        mat = sio.loadmat(self._raw_file2)
+        self.g.nodes['author'].data['feat'] = torch.from_numpy(mat['features']).float()
+        self.g.nodes['author'].data['label'] = torch.tensor(self.authors['label'].to_list())
 
-        paper_labels = conf_labels[pc_c]
-        paper_train_idx, paper_val_idx, paper_test_idx = split_idx(paper_labels, 0.2, 0.1)
-        n_papers = len(self.paper_id)
-        self.g.nodes['paper'].data['feat'] = self.g.adj(etype='pt').to_dense()[:, selected_terms]
-        self.g.nodes['paper'].data['label'] = paper_labels
-        self.g.nodes['paper'].data['train_mask'] = generate_mask_tensor(idx2mask(paper_train_idx, n_papers))
-        self.g.nodes['paper'].data['val_mask'] = generate_mask_tensor(idx2mask(paper_val_idx, n_papers))
-        self.g.nodes['paper'].data['test_mask'] = generate_mask_tensor(idx2mask(paper_test_idx, n_papers))
+        n_authors = len(self.authors)
+        train_idx, val_idx = train_test_split(np.arange(n_authors), test_size=400, random_state=self.seed)
+        train_idx, test_idx = train_test_split(train_idx, train_size=800, random_state=self.seed)
+        self.g.nodes['author'].data['train_mask'] = generate_mask_tensor(idx2mask(train_idx, n_authors))
+        self.g.nodes['author'].data['val_mask'] = generate_mask_tensor(idx2mask(val_idx, n_authors))
+        self.g.nodes['author'].data['test_mask'] = generate_mask_tensor(idx2mask(test_idx, n_authors))
 
-        self.g.nodes['conf'].data['label'] = conf_labels
-
-    def read_author(self):
-        self.author_id, self.author_name = {}, []
-        aid = 0
-        labels = []
-        with open(os.path.join(self.raw_path, 'author_label.txt')) as f:
-            for line in f:
-                line = line.strip().split('\t')
-                self.author_id[int(line[0])] = aid
-                labels.append(int(line[1]))
-                self.author_name.append(line[2])
-                aid += 1
-        return torch.tensor(labels)
-
-    def read_conf(self):
-        self.conf_id, self.conf_name = {}, []
-        cid = 0
-        labels = []
-        with open(os.path.join(self.raw_path, 'conf_label.txt')) as f:
-            for line in f:
-                line = line.strip().split('\t')
-                self.conf_id[int(line[0])] = cid
-                labels.append(int(line[1]))
-                self.conf_name.append(line[2])
-                cid += 1
-        return torch.tensor(labels)
-
-    def read_papers(self):
-        self.paper_id, self.paper_name = {}, []
-        pid = 0
-        with open(os.path.join(self.raw_path, 'paper.txt')) as f:
-            for line in f:
-                line = line.strip().split('\t')
-                self.paper_id[int(line[0])] = pid
-                self.paper_name.append(line[1])
-                pid += 1
-
-    def read_terms(self):
-        self.term_id, self.term_name = {}, []
-        tid = 0
-        with open(os.path.join(self.raw_path, 'term.txt')) as f:
-            for line in f:
-                line = line.strip().split('\t')
-                if line[1] not in STOPWORDS:
-                    self.term_id[int(line[0])] = tid
-                    self.term_name.append(line[1])
-                    tid += 1
-
-    def read_edge(self, file, src_id, dst_id):
-        src, dst = [], []
-        with open(os.path.join(self.raw_path, file)) as f:
-            for line in f:
-                line = line.strip().split('\t')
-                u, v = int(line[0]), int(line[1])
-                if u in src_id and v in dst_id:
-                    src.append(src_id[u])
-                    dst.append(dst_id[v])
-        return src, dst
+        self.g.nodes['conf'].data['label'] = torch.tensor(self.confs['label'].to_list())
 
     def has_cache(self):
         return os.path.exists(self._cache_file)
@@ -191,6 +188,10 @@ class DBLPFourAreaDataset(DGLDataset):
     @property
     def meta_paths(self):
         return [['ap', 'pa'], ['ap', 'pc', 'cp', 'pa'], ['ap', 'pt', 'tp', 'pa']]
+
+    @property
+    def _raw_file2(self):
+        return os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat')
 
     @property
     def _cache_file(self):
@@ -213,16 +214,16 @@ class DBLP4057Dataset(DGLDataset):
 
     * feat: tensor(4057, 334)
     * label: tensor(4057)，类别为0~3
-    * train_mask, val_mask, test_mask: tensor(3025)，True的数量分别为800, 400, 2857
+    * train_mask, val_mask, test_mask: tensor(4057)，True的数量分别为800, 400, 2857
     """
 
     def __init__(self):
-        super().__init__('DBLP4057', 'https://pan.baidu.com/s/1Qr2e97MofXsBhUvQqgJqDg')
+        super().__init__('DBLP4057_GAT_with_idx', 'https://pan.baidu.com/s/1Qr2e97MofXsBhUvQqgJqDg')
 
     def download(self):
         if not os.path.exists(self._raw_file):
             raise FileNotFoundError('请手动下载文件 {} 提取码：6b3h 并保存为 {}'.format(
-                self.url, os.path.join(self._raw_file)
+                self.url, self._raw_file
             ))
 
     def save(self):
