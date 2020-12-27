@@ -1,17 +1,4 @@
-import random
-
-import numpy as np
-import torch
-
 from pytorch_tutorial.gnn.data import ACMDataset, ACM3025Dataset, DBLPFourAreaDataset, DBLP4057Dataset
-
-
-def set_random_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
 
 
 def load_hetero_data(dataset):

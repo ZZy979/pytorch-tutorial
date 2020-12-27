@@ -5,12 +5,13 @@
 * <https://docs.dgl.ai/guide/training-node.html>
 * <https://github.com/dmlc/dgl/blob/master/examples/pytorch/graphsage/train_full.py>
 """
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.data import CiteseerGraphDataset
 from dgl.nn import SAGEConv
+
+from pytorch_tutorial.gnn.utils import evaluate_accuracy
 
 
 class SAGE(nn.Module):
@@ -25,17 +26,6 @@ class SAGE(nn.Module):
         h = F.relu(self.conv1(graph, inputs))
         h = self.conv2(graph, h)
         return h
-
-
-def evaluate(model, graph, features, labels, mask):
-    model.eval()
-    with torch.no_grad():
-        logits = model(graph, features)
-        logits = logits[mask]
-        labels = labels[mask]
-        _, indices = torch.max(logits, dim=1)
-        correct = torch.sum(indices == labels)
-        return correct.item() * 1.0 / len(labels)
 
 
 def main():
@@ -63,13 +53,13 @@ def main():
         # compute loss
         loss = F.cross_entropy(logits[train_mask], node_labels[train_mask])
         # compute validation accuracy
-        acc = evaluate(model, g, node_features, node_labels, valid_mask)
+        acc = evaluate_accuracy(model, node_labels, valid_mask, g, node_features)
         # backward propagation
         opt.zero_grad()
         loss.backward()
         opt.step()
         print('Epoch {:d} | Loss {:.4f} | Accuracy {:.2%}'.format(epoch + 1, loss.item(), acc))
-    acc = evaluate(model, g, node_features, node_labels, test_mask)
+    acc = evaluate_accuracy(model, node_labels, test_mask, g, node_features)
     print('Test accuracy {:.4f}'.format(acc))
 
 

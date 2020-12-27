@@ -6,7 +6,8 @@ from sklearn.metrics import f1_score
 
 from pytorch_tutorial.gnn.han.model import HAN
 from pytorch_tutorial.gnn.han.model_hetero import HANHetero
-from pytorch_tutorial.gnn.han.utils import set_random_seed, load_data, load_hetero_data
+from pytorch_tutorial.gnn.han.utils import load_data, load_hetero_data
+from pytorch_tutorial.gnn.utils import set_random_seed
 
 
 def score(logits, labels):
