@@ -1,4 +1,4 @@
-"""参考：<https://pytorch.org/tutorials/beginner/pytorch_with_examples.html>"""
+"""参考：<https://github.com/pytorch/tutorials/blob/09460601a9f914511d87c12c4e0b04dc21df3086/beginner_source/pytorch_with_examples.rst>"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
