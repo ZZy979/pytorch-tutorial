@@ -5,11 +5,11 @@ import torch.nn as nn
 import torch.optim as optim
 
 from pytorch_tutorial.gnn.gcn.model import GCN
-from pytorch_tutorial.gnn.utils import load_dataset, evaluate_accuracy
+from pytorch_tutorial.gnn.utils import load_citation_dataset, accuracy
 
 
 def train(args):
-    data = load_dataset(args.dataset)
+    data = load_citation_dataset(args.dataset)
     g = data[0]
     features = g.ndata['feat']
     labels = g.ndata['label']
@@ -35,9 +35,9 @@ def train(args):
         loss.backward()
         optimizer.step()
 
-        acc = evaluate_accuracy(model, labels, val_mask, g, features)
+        acc = accuracy(logits[val_mask], labels[val_mask])
         print('Epoch {:05d} | Loss {:.4f} | ValAcc {:.4f}'.format(epoch, loss.item(), acc))
-    acc = evaluate_accuracy(model, labels, test_mask, g, features)
+    acc = accuracy(model(g, features)[test_mask], labels[test_mask])
     print('Test Accuracy {:.4f}'.format(acc))
 
 

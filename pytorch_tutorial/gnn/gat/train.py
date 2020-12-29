@@ -5,11 +5,11 @@ import torch
 import torch.nn.functional as F
 
 from pytorch_tutorial.gnn.gat.model import GAT
-from pytorch_tutorial.gnn.utils import load_dataset, accuracy, evaluate_accuracy
+from pytorch_tutorial.gnn.utils import load_citation_dataset, accuracy
 
 
 def train(args):
-    data = load_dataset(args.dataset)
+    data = load_citation_dataset(args.dataset)
     g = data[0]
     if args.gpu < 0:
         cuda = False
@@ -51,13 +51,13 @@ def train(args):
         optimizer.step()
 
         train_acc = accuracy(logits[train_mask], labels[train_mask])
-        val_acc = evaluate_accuracy(model, labels, val_mask, features)
+        val_acc = accuracy(logits[val_mask], labels[val_mask])
         print('Epoch {:05d} | Loss {:.4f} | TrainAcc {:.4f} |  ValAcc {:.4f}'.format(
             epoch, loss.item(), train_acc, val_acc
         ))
 
     print()
-    acc = evaluate_accuracy(model, labels, test_mask, features)
+    acc = accuracy(model(features)[test_mask], labels[test_mask])
     print('Test Accuracy {:.4f}'.format(acc))
 
 

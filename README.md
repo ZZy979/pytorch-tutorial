@@ -18,6 +18,11 @@
 * graph_clf.py, graph_clf_hetero.py - [图分类](https://docs.dgl.ai/guide/training-graph.html)
 
 ### GNN模型
-* gcn - Graph Convolutional Network (GCN) [论文链接](https://arxiv.org/abs/1609.02907)
+* gcn - Graph Convolutional Network (GCN)
+[论文链接](https://arxiv.org/abs/1609.02907)
 | [DGL教程](https://docs.dgl.ai/tutorials/models/1_gnn/1_gcn.html)
 | [DGL实现](https://github.com/dmlc/dgl/blob/master/examples/pytorch/gcn)
+* rgcn - Relational Graph Convolutional Network (R-GCN)
+[论文链接](https://arxiv.org/abs/1703.06103)
+| [DGL教程](https://docs.dgl.ai/tutorials/models/1_gnn/4_rgcn.html)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn-hetero)

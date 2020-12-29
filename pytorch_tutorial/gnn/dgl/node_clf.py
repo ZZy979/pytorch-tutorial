@@ -11,7 +11,7 @@ import torch.optim as optim
 from dgl.data import CiteseerGraphDataset
 from dgl.nn import SAGEConv
 
-from pytorch_tutorial.gnn.utils import evaluate_accuracy
+from pytorch_tutorial.gnn.utils import accuracy
 
 
 class SAGE(nn.Module):
@@ -53,13 +53,13 @@ def main():
         # compute loss
         loss = F.cross_entropy(logits[train_mask], node_labels[train_mask])
         # compute validation accuracy
-        acc = evaluate_accuracy(model, node_labels, valid_mask, g, node_features)
+        acc = accuracy(logits[valid_mask], node_labels[valid_mask])
         # backward propagation
         opt.zero_grad()
         loss.backward()
         opt.step()
         print('Epoch {:d} | Loss {:.4f} | Accuracy {:.2%}'.format(epoch + 1, loss.item(), acc))
-    acc = evaluate_accuracy(model, node_labels, test_mask, g, node_features)
+    acc = accuracy(model(g, node_features)[test_mask], node_labels[test_mask])
     print('Test accuracy {:.4f}'.format(acc))
 
 
