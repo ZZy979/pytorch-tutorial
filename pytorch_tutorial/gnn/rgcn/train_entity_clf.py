@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.rgcn.model import EntityClassification
+from pytorch_tutorial.gnn.rgcn.model_hetero import EntityClassification
 from pytorch_tutorial.gnn.utils import load_rdf_dataset, accuracy
 
 
@@ -19,7 +19,8 @@ def train(args):
 
     model = EntityClassification(
         {ntype: g.num_nodes(ntype) for ntype in g.ntypes},
-        args.num_hidden, num_classes, list(set(g.etypes)), args.num_bases, args.self_loop
+        args.num_hidden, num_classes, list(set(g.etypes)),
+        args.num_hidden_layers, args.num_bases, args.self_loop, args.dropout
     )
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     for epoch in range(args.epochs):
@@ -39,13 +40,14 @@ def train(args):
 
 def main():
     parser = argparse.ArgumentParser(description='R-GCN Entity Classification')
-    parser.add_argument('--seed', type=int, default=1, help='random seed')
     parser.add_argument(
         '--dataset', choices=['aifb', 'mutag', 'bgs', 'am'], default='aifb', help='dataset'
     )
     parser.add_argument('--num-hidden', type=int, default=16, help='number of hidden units')
+    parser.add_argument('--num-hidden-layers', type=int, default=1, help='number of hidden layers')
     parser.add_argument('--num-bases', type=int, default=0)
     parser.add_argument('--self-loop', action='store_true', help='include self-loop message')
+    parser.add_argument('--dropout', type=float, default=0.0, help='dropout probability')
     parser.add_argument('--epochs', type=int, default=50, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.01, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')

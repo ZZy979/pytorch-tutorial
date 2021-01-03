@@ -1,0 +1,13 @@
+实体分类
+使用PyCharm运行
+AIFB
+python train_entity_clf.py --dataset=aifb --num-hidden=16 --num-bases=0 --weight-decay=0
+
+MUTAG
+python train_entity_clf.py --dataset=mutag --num-hidden=16 --num-bases=30
+
+BGS
+python train_entity_clf.py --dataset=bgs --num-hidden=16 --num-bases=40
+
+AM
+python train_entity_clf.py --dataset=am --num-hidden=10 --num-bases=40

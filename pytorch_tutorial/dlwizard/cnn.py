@@ -18,15 +18,15 @@ class CNN(nn.Module):
 
     def forward(self, x):
         """
-        :param x: tensor(N, 28, 28) 输入图像
-        :return: tensor(N, 10)
+        :param x: tensor(*, 28, 28) 输入图像
+        :return: tensor(*, 10)
         """
-        out = F.relu(self.conv1(x))  # (N, 16, 28, 28)
-        out = self.pool1(out)  # (N, 16, 14, 14)
-        out = F.relu(self.conv2(out))  # (N, 32, 14, 14)
-        out = self.pool2(out)  # (N, 32, 7, 7)
-        out = out.view(out.shape[0], -1)  # (N, 32 * 7 * 7)
-        out = self.fc1(out)  # (N, 10)
+        out = F.relu(self.conv1(x))  # (*, 16, 28, 28)
+        out = self.pool1(out)  # (*, 16, 14, 14)
+        out = F.relu(self.conv2(out))  # (*, 32, 14, 14)
+        out = self.pool2(out)  # (*, 32, 7, 7)
+        out = out.view(out.shape[0], -1)  # (*, 32 * 7 * 7)
+        out = self.fc1(out)  # (*, 10)
         return out
 
 

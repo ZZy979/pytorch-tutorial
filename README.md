@@ -27,4 +27,5 @@
 * rgcn - Relational Graph Convolutional Network (R-GCN)
 [论文链接](https://arxiv.org/abs/1703.06103)
 | [DGL教程](https://docs.dgl.ai/tutorials/models/1_gnn/4_rgcn.html)
-| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn-hetero)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn)
+| [DGL实现（异构图）](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn-hetero)
