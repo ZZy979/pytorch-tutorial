@@ -6,7 +6,6 @@ from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets import MNIST
 
 
-# https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_feedforward_neuralnetwork/
 class LogisticRegressionModel(nn.Module):
 
     def __init__(self, input_dim, output_dim):
@@ -17,21 +16,16 @@ class LogisticRegressionModel(nn.Module):
         return self.linear(x)
 
 
-def main():
-    train_dataset = MNIST('./data', True, transforms.ToTensor(), download=True)
-    test_dataset = MNIST('./data', False, transforms.ToTensor())
+# https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_logistic_regression/
+def train_mnist(model, optimizer):
+    train_dataset = MNIST('D:\\torchdata', True, transforms.ToTensor(), download=True)
+    test_dataset = MNIST('D:\\torchdata', False, transforms.ToTensor())
     batch_size = 100
-    n_iters = 3000
-    n_epochs = int(n_iters / (len(train_dataset) / batch_size))
+    n_epochs = 5
     train_loader = DataLoader(train_dataset, batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
 
-    model = LogisticRegressionModel(28 * 28, 10)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001)
-    for p in model.parameters():
-        print(p.size())
-
     iteration = 0
     for epoch in range(n_epochs):
         for images, labels in train_loader:
@@ -55,6 +49,14 @@ def main():
                 print('Iteration: {}. Loss: {}. Accuracy: {:.2%}'.format(
                     iteration, loss.item(), accuracy
                 ))
+
+
+def main():
+    model = LogisticRegressionModel(28 * 28, 10)
+    optimizer = optim.SGD(model.parameters(), lr=0.001)
+    for p in model.parameters():
+        print(p.size())
+    train_mnist(model, optimizer)
 
 
 if __name__ == '__main__':

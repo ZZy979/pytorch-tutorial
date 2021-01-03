@@ -127,9 +127,9 @@ def main():
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
 
-    trainset = torchvision.datasets.CIFAR10('data', True, transform, download=True)
+    trainset = torchvision.datasets.CIFAR10('D:\\torchdata', True, transform, download=True)
     trainloader = DataLoader(trainset, batch_size=4, shuffle=True, num_workers=0)
-    testset = torchvision.datasets.CIFAR10('data', False, transform, download=True)
+    testset = torchvision.datasets.CIFAR10('D:\\torchdata', False, transform, download=True)
     testloader = DataLoader(testset, batch_size=4, shuffle=True, num_workers=0)
     # show_random_image(trainloader)
 

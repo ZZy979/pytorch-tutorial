@@ -7,7 +7,8 @@
 
 ## dlwizard - [Deep Learning Wizard](https://www.deeplearningwizard.com/deep_learning/intro/)
 * linear_regression.py - [线性回归](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_linear_regression/)
-* logistic_regression.py - [MNIST逻辑回归分类器](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_logistic_regression/)
+* logistic_regression.py - [逻辑回归分类器](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_logistic_regression/)
+* fnn.py - [前馈神经网络](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_feedforward_neuralnetwork/)
 
 ## gnn - 图神经网络
 ### dgl - [DGL官方文档示例](https://docs.dgl.ai/)
