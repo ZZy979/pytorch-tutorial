@@ -16,14 +16,12 @@ def train(args):
     train_mask = g.ndata['train_mask']
     val_mask = g.ndata['val_mask']
     test_mask = g.ndata['test_mask']
-    num_feats = features.shape[1]
-    num_classes = data.num_classes
 
     # add self loop
     g = dgl.remove_self_loop(g)
     g = dgl.add_self_loop(g)
 
-    model = GCN(num_feats, args.num_hidden, num_classes)
+    model = GCN(features.shape[1], args.num_hidden, data.num_classes)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters())
 

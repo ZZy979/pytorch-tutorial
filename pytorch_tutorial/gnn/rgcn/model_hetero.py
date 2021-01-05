@@ -38,6 +38,8 @@ class RelGraphConvHetero(nn.Module):
         })
 
         self.use_weight = weight
+        if not num_bases:
+            num_bases = len(rel_names)
         self.use_basis = weight and 0 < num_bases < len(rel_names)
         if self.use_weight:
             if self.use_basis:
@@ -56,20 +58,19 @@ class RelGraphConvHetero(nn.Module):
         :param inputs: Dict[str, tensor(N_i, d_in)] 顶点类型到输入特征的映射
         :return: Dict[str, tensor(N_i, d_out)] 顶点类型到输出特征的映射
         """
-        with g.local_scope():
-            if self.use_weight:
-                weight = self.basis() if self.use_basis else self.weight  # (R, d_in, d_out)
-                kwargs = {rel: {'weight': weight[i]} for i, rel in enumerate(self.rel_names)}
-            else:
-                kwargs = {}
-            hs = self.conv(g, inputs, mod_kwargs=kwargs)  # Dict[ntype, (N_i, d_out)]
-            for ntype in hs:
-                if self.self_loop:
-                    hs[ntype] += torch.matmul(inputs[ntype], self.loop_weight)
-                if self.activation:
-                    hs[ntype] = self.activation(hs[ntype])
-                hs[ntype] = self.dropout(hs[ntype])
-            return hs
+        if self.use_weight:
+            weight = self.basis() if self.use_basis else self.weight  # (R, d_in, d_out)
+            kwargs = {rel: {'weight': weight[i]} for i, rel in enumerate(self.rel_names)}
+        else:
+            kwargs = {}
+        hs = self.conv(g, inputs, mod_kwargs=kwargs)  # Dict[ntype, (N_i, d_out)]
+        for ntype in hs:
+            if self.self_loop:
+                hs[ntype] += torch.matmul(inputs[ntype], self.loop_weight)
+            if self.activation:
+                hs[ntype] = self.activation(hs[ntype])
+            hs[ntype] = self.dropout(hs[ntype])
+        return hs
 
 
 class EntityClassification(nn.Module):
