@@ -29,3 +29,7 @@
 | [DGL教程](https://docs.dgl.ai/tutorials/models/1_gnn/4_rgcn.html)
 | [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn)
 | [DGL实现（异构图）](https://github.com/dmlc/dgl/tree/master/examples/pytorch/rgcn-hetero)
+* gat - Relational Graph Convolutional Network (R-GCN)
+[论文链接](https://arxiv.org/abs/1710.10903)
+| [DGL教程](https://docs.dgl.ai/tutorials/models/1_gnn/9_gat.html)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/gat)
