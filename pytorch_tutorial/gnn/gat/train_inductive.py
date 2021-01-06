@@ -62,7 +62,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=2, help='batch size')
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.005, help='learning rate')
-    parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
+    parser.add_argument('--weight-decay', type=float, default=0., help='weight decay')
     args = parser.parse_args()
     train(args)
 
