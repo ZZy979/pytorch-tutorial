@@ -6,43 +6,52 @@ import numpy as np
 import scipy.io as sio
 import torch
 from dgl.data import DGLDataset
-from dgl.data.utils import _get_dgl_url, download, generate_mask_tensor, idx2mask
+from dgl.data.utils import _get_dgl_url, download, save_graphs, load_graphs, \
+    generate_mask_tensor, idx2mask
 
 
 class ACMDataset(DGLDataset):
-    """ACM数据集，只有一个图
+    """ACM数据集，只有一个异构图
 
     统计数据
     -----
     * 顶点：17351 author, 4025 paper, 72 field
     * 边：13407 paper-author, 4025 paper-field
+    * 类别数：3
+    * paper顶点划分：808 train, 401 valid, 2816 test
+
+    属性
+    -----
+    * num_classes: 类别数
+    * metapaths: 使用的元路径
 
     paper顶点属性
     -----
     * feat: tensor(4025, 1903)
-    * label: tensor(4025)，类别为0~2
-    * train_mask, val_mask, test_mask: tensor(4025)，True的数量分别为808, 401, 2816
+    * label: tensor(4025)
+    * train_mask, val_mask, test_mask: tensor(4025)
     """
 
     def __init__(self):
         super().__init__('ACM', _get_dgl_url('dataset/ACM.mat'))
 
     def download(self):
-        if not os.path.exists(self._raw_file):
-            download(self.url, path=self._raw_file)
+        file_path = os.path.join(self.raw_dir, 'ACM.mat')
+        if not os.path.exists(file_path):
+            download(self.url, path=file_path)
 
     def save(self):
-        dgl.save_graphs(self._cache_file, [self.g])
+        save_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'), [self.g])
 
     def load(self):
-        graphs, _ = dgl.load_graphs(self._cache_file)
+        graphs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         self.g = graphs[0]
         # save_graphs会将bool转换成uint8
         for k in ('train_mask', 'val_mask', 'test_mask'):
             self.g.nodes['paper'].data[k] = self.g.nodes['paper'].data[k].type(torch.bool)
 
     def process(self):
-        data = sio.loadmat(self._raw_file)
+        data = sio.loadmat(os.path.join(self.raw_dir, 'ACM.mat'))
         p_vs_l = data['PvsL']  # paper-field?
         p_vs_a = data['PvsA']  # paper-author
         p_vs_t = data['PvsT']  # paper-term, bag of words
@@ -96,7 +105,7 @@ class ACMDataset(DGLDataset):
         self.g.nodes['paper'].data['test_mask'] = test_mask
 
     def has_cache(self):
-        return os.path.exists(self._cache_file)
+        return os.path.exists(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
 
     def __getitem__(self, idx):
         if idx != 0:
@@ -111,57 +120,54 @@ class ACMDataset(DGLDataset):
         return 3
 
     @property
-    def meta_paths(self):
+    def metapaths(self):
         return [['pa', 'ap'], ['pf', 'fp']]
-
-    @property
-    def _raw_file(self):
-        return os.path.join(self.raw_dir, self.name + '.mat')
-
-    @property
-    def _cache_file(self):
-        return os.path.join(self.save_dir, self.name + '.bin')
 
 
 class ACM3025Dataset(DGLDataset):
     """HAN作者处理的ACM数据集：https://github.com/Jhy1993/HAN#qa
 
-    只有一个图，由paper顶点基于PAP和PLP两个元路径的邻居的同构图组成
+    只有一个样本，包括paper顶点基于PAP和PLP两个元路径的邻居组成的同构图
 
     >>> data = ACM3025Dataset()
     >>> author_g, subject_g = data[0]
 
-    * author_g: 3025个顶点，26256条边
-    * subject_g: 3025个顶点，2207736条边
+    统计数据
+    -----
+    * author_g: 3025个顶点，29281条边
+    * subject_g: 3025个顶点，2210761条边
+    * 类别数：3
+    * 划分：600 train, 300 valid, 2125 test
 
-    两个图都有以下顶点属性：
-
+    顶点属性
+    -----
     * feat: tensor(3025, 1870)
-    * label: tensor(3025)，类别为0~2
-    * train_mask, val_mask, test_mask: tensor(3025)，True的数量分别为600, 300, 2125
+    * label: tensor(3025)
+    * train_mask, val_mask, test_mask: tensor(3025)
     """
 
     def __init__(self):
         super().__init__('ACM3025', _get_dgl_url('dataset/ACM3025.pkl'))
 
     def download(self):
-        if not os.path.exists(self._raw_file):
-            download(self.url, path=self._raw_file)
+        file_path = os.path.join(self.raw_dir, 'ACM3025.pkl')
+        if not os.path.exists(file_path):
+            download(self.url, path=file_path)
 
     def save(self):
-        dgl.save_graphs(self._cache_file, self.gs)
+        save_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'), self.gs)
 
     def load(self):
-        self.gs, _ = dgl.load_graphs(self._cache_file)
+        self.gs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         for g in self.gs:
             for k in ('train_mask', 'val_mask', 'test_mask'):
                 g.ndata[k] = g.ndata[k].type(torch.bool)
 
     def process(self):
-        with open(self._raw_file, 'rb') as f:
+        with open(os.path.join(self.raw_dir, 'ACM3025.pkl'), 'rb') as f:
             data = pickle.load(f)
         features = torch.from_numpy(data['feature'].todense()).float()  # (3025, 1870)
-        labels = torch.from_numpy(data['label'].todense()).long().nonzero()[:, 1]  # (3025)
+        labels = torch.from_numpy(data['label'].todense()).long().nonzero(as_tuple=True)[1]  # (3025)
 
         # Adjacency matrices for meta-path based neighbors
         # (Mufei): I verified both of them are binary adjacency matrices with self loops
@@ -181,7 +187,7 @@ class ACM3025Dataset(DGLDataset):
             g.ndata['test_mask'] = test_mask
 
     def has_cache(self):
-        return os.path.exists(self._cache_file)
+        return os.path.exists(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
 
     def __getitem__(self, idx):
         if idx != 0:
@@ -194,11 +200,3 @@ class ACM3025Dataset(DGLDataset):
     @property
     def num_classes(self):
         return 3
-
-    @property
-    def _raw_file(self):
-        return os.path.join(self.raw_dir, self.name + '.pkl')
-
-    @property
-    def _cache_file(self):
-        return os.path.join(self.save_dir, self.name + '.bin')

@@ -6,7 +6,8 @@ import pandas as pd
 import scipy.io as sio
 import torch
 from dgl.data import DGLDataset
-from dgl.data.utils import makedirs, download, generate_mask_tensor, idx2mask
+from dgl.data.utils import makedirs, download, save_graphs, load_graphs, \
+    generate_mask_tensor, idx2mask
 from nltk import WordNetLemmatizer
 from nltk.corpus import stopwords as nltk_stopwords
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as sklearn_stopwords
@@ -14,56 +15,52 @@ from sklearn.model_selection import train_test_split
 
 
 class DBLPFourAreaDataset(DGLDataset):
-    """4个领域的DBLP学术网络数据集，只有一个图
+    """4领域DBLP学术网络数据集，只有一个异构图
 
     统计数据
     -----
     * 顶点：4057 author, 14328 paper, 20 conf, 7723 term
     * 边：19645 paper-author, 14328 paper-conf, 85810 paper-term
+    * 类别数：4
+    * author顶点划分：800 train, 400 valid, 2857 test
 
     属性
     -----
-    * num_classes: 类别数(4)
-    * meta_paths: 使用的元路径
+    * num_classes: 类别数
+    * metapaths: 使用的元路径
 
     author顶点属性
     -----
     * feat: tensor(4057, 334)，关键词的词袋表示（来自HAN作者预处理的数据集）
-    * label: tensor(4057)，类别为0~3 (0: DB, 1: DM, 2: AI, 3: IR)
-    * train_mask, val_mask, test_mask: tensor(4057)，True的数量分别为800, 400, 2857
+    * label: tensor(4057)，0: DB, 1: DM, 2: AI, 3: IR
+    * train_mask, val_mask, test_mask: tensor(4057)
 
     conf顶点属性
     -----
     * label: tensor(20)，类别为0~3
     """
-    raw_files = [
+    _url = 'https://raw.githubusercontent.com/Jhy1993/HAN/master/data/DBLP_four_area/'
+    _url2 = 'https://pan.baidu.com/s/1Qr2e97MofXsBhUvQqgJqDg'
+    _raw_files = [
         'readme.txt', 'author_label.txt', 'paper.txt', 'conf_label.txt', 'term.txt',
         'paper_author.txt', 'paper_conf.txt', 'paper_term.txt'
     ]
-    seed = 42
+    _seed = 42
 
-    def __init__(self, raw_dir=None, save_dir=None, force_reload=False, verbose=False):
-        super().__init__(
-            'DBLP_four_area', 'https://github.com/Jhy1993/HAN/raw/master/data/DBLP_four_area/',
-            raw_dir, save_dir, force_reload=force_reload, verbose=verbose
-        )
+    def __init__(self):
+        super().__init__('DBLP_four_area', self._url)
 
     def download(self):
         if not os.path.exists(self.raw_path):
             makedirs(self.raw_path)
-        for file in self.raw_files:
-            if not os.path.exists(os.path.join(self.raw_path, file)):
-                download(self.url + file, os.path.join(self.raw_path, file))
-        if not os.path.exists(self._raw_file2):
-            raise FileNotFoundError('请手动下载文件 {} 提取码：6b3h 并保存为 {}'.format(
-                self.url, self._raw_file2
-            ))
+        for file in self._raw_files:
+            download(self.url + file, os.path.join(self.raw_path, file))
 
     def save(self):
-        dgl.save_graphs(self._cache_file, [self.g])
+        save_graphs(self._cache_file, [self.g])
 
     def load(self):
-        graphs, _ = dgl.load_graphs(self._cache_file)
+        graphs, _ = load_graphs(self._cache_file)
         self.g = graphs[0]
         for k in ('train_mask', 'val_mask', 'test_mask'):
             self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
@@ -79,12 +76,6 @@ class DBLPFourAreaDataset(DGLDataset):
         self.g = self._build_graph()
         self._add_ndata()
 
-    def _read_file(self, filename, names, index_col=None, encoding='utf8'):
-        return pd.read_csv(
-            os.path.join(self.raw_path, filename), sep='\t', names=names, index_col=index_col,
-            keep_default_na=False, encoding=encoding
-        )
-
     def _read_raw_data(self):
         authors = self._read_file('author_label.txt', names=['id', 'label', 'name'], index_col='id')
         papers = self._read_file('paper.txt', names=['id', 'title'], index_col='id', encoding='cp1252')
@@ -94,6 +85,12 @@ class DBLPFourAreaDataset(DGLDataset):
         paper_conf = self._read_file('paper_conf.txt', names=['paper_id', 'conf_id'])
         paper_term = self._read_file('paper_term.txt', names=['paper_id', 'term_id'])
         return authors, papers, confs, terms, paper_author, paper_conf, paper_term
+
+    def _read_file(self, filename, names, index_col=None, encoding='utf8'):
+        return pd.read_csv(
+            os.path.join(self.raw_path, filename), sep='\t', names=names, index_col=index_col,
+            keep_default_na=False, encoding=encoding
+        )
 
     def _filter_nodes_and_edges(self):
         """过滤掉不与学者关联的顶点和边"""
@@ -157,13 +154,18 @@ class DBLPFourAreaDataset(DGLDataset):
         })
 
     def _add_ndata(self):
-        mat = sio.loadmat(self._raw_file2)
+        _raw_file2 = os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat')
+        if not os.path.exists(_raw_file2):
+            raise FileNotFoundError('请手动下载文件 {} 提取码：6b3h 并保存到 {}'.format(
+                self._url2, _raw_file2
+            ))
+        mat = sio.loadmat(_raw_file2)
         self.g.nodes['author'].data['feat'] = torch.from_numpy(mat['features']).float()
         self.g.nodes['author'].data['label'] = torch.tensor(self.authors['label'].to_list())
 
         n_authors = len(self.authors)
-        train_idx, val_idx = train_test_split(np.arange(n_authors), test_size=400, random_state=self.seed)
-        train_idx, test_idx = train_test_split(train_idx, train_size=800, random_state=self.seed)
+        train_idx, val_idx = train_test_split(np.arange(n_authors), test_size=400, random_state=self._seed)
+        train_idx, test_idx = train_test_split(train_idx, train_size=800, random_state=self._seed)
         self.g.nodes['author'].data['train_mask'] = generate_mask_tensor(idx2mask(train_idx, n_authors))
         self.g.nodes['author'].data['val_mask'] = generate_mask_tensor(idx2mask(val_idx, n_authors))
         self.g.nodes['author'].data['test_mask'] = generate_mask_tensor(idx2mask(test_idx, n_authors))
@@ -186,7 +188,7 @@ class DBLPFourAreaDataset(DGLDataset):
         return 4
 
     @property
-    def meta_paths(self):
+    def metapaths(self):
         return [['ap', 'pa'], ['ap', 'pc', 'cp', 'pa'], ['ap', 'pt', 'tp', 'pa']]
 
     @property
@@ -201,42 +203,47 @@ class DBLPFourAreaDataset(DGLDataset):
 class DBLP4057Dataset(DGLDataset):
     """HAN作者处理的ACM数据集：https://github.com/Jhy1993/HAN#datasets
 
-    只有一个图，由author顶点基于APA, APCPA和APTPA三个元路径的邻居的同构图组成
+    只有一个样本，包括author顶点基于APA, APCPA和APTPA三个元路径的邻居组成的同构图
 
     >>> data = DBLP4057Dataset()
     >>> apa_g, apcpa_g, aptpa_g = data[0]
 
+    统计数据
+    -----
     * apa_g: 4057个顶点，11113条边
     * apcpa_g: 4057个顶点，5000495条边
     * aptpa_g: 4057个顶点，6772278条边
+    * 类别数：4
+    * 划分：800 train, 400 valid, 2857 test
 
-    三个图都有以下顶点属性：
-
+    顶点属性
+    -----
     * feat: tensor(4057, 334)
-    * label: tensor(4057)，类别为0~3
-    * train_mask, val_mask, test_mask: tensor(4057)，True的数量分别为800, 400, 2857
+    * label: tensor(4057)
+    * train_mask, val_mask, test_mask: tensor(4057)
     """
 
     def __init__(self):
-        super().__init__('DBLP4057_GAT_with_idx', 'https://pan.baidu.com/s/1Qr2e97MofXsBhUvQqgJqDg')
+        super().__init__('DBLP4057', 'https://pan.baidu.com/s/1Qr2e97MofXsBhUvQqgJqDg')
 
     def download(self):
-        if not os.path.exists(self._raw_file):
+        file_path = os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat')
+        if not os.path.exists(file_path):
             raise FileNotFoundError('请手动下载文件 {} 提取码：6b3h 并保存为 {}'.format(
-                self.url, self._raw_file
+                self.url, file_path
             ))
 
     def save(self):
-        dgl.save_graphs(self._cache_file, self.gs)
+        save_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'), self.gs)
 
     def load(self):
-        self.gs, _ = dgl.load_graphs(self._cache_file)
+        self.gs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         for g in self.gs:
             for k in ('train_mask', 'val_mask', 'test_mask'):
                 g.ndata[k] = g.ndata[k].type(torch.bool)
 
     def process(self):
-        data = sio.loadmat(self._raw_file)
+        data = sio.loadmat(os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat'))
         apa_g = dgl.graph(data['net_APA'].nonzero())
         apcpa_g = dgl.graph(data['net_APCPA'].nonzero())
         aptpa_g = dgl.graph(data['net_APTPA'].nonzero())
@@ -256,7 +263,7 @@ class DBLP4057Dataset(DGLDataset):
             g.ndata['test_mask'] = test_mask
 
     def has_cache(self):
-        return os.path.exists(self._cache_file)
+        return os.path.exists(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
 
     def __getitem__(self, idx):
         if idx != 0:
@@ -269,11 +276,3 @@ class DBLP4057Dataset(DGLDataset):
     @property
     def num_classes(self):
         return 4
-
-    @property
-    def _raw_file(self):
-        return os.path.join(self.raw_dir, self.name + '.mat')
-
-    @property
-    def _cache_file(self):
-        return os.path.join(self.save_dir, self.name + '.bin')

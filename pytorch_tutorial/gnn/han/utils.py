@@ -14,7 +14,7 @@ def load_hetero_data(dataset):
 
     g = data[0]
     ndata = g.nodes[ntype].data
-    return g, data.meta_paths, ndata['feat'], ndata['label'], data.num_classes, \
+    return g, data.metapaths, ndata['feat'], ndata['label'], data.num_classes, \
            ndata['train_mask'], ndata['val_mask'], ndata['test_mask']
 
 
