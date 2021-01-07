@@ -65,7 +65,7 @@ class LinkPrediction(nn.Module):
 
     def forward(self, g, etypes):
         """
-        :param g: DGLHeteroGraph 同构图
+        :param g: DGLGraph 同构图
         :param etypes: tensor(|E|) 边类型
         :return: tensor(N, d_hid) 顶点嵌入
         """

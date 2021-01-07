@@ -39,7 +39,7 @@ class GAT(nn.Module):
 
     def forward(self, g, h):
         """
-        :param g: DGLHeteroGraph 同构图
+        :param g: DGLGraph 同构图
         :param h: tensor(N, d_in) 输入特征，N为g的顶点数
         :return: tensor(N, d_out) 输出顶点特征，K为注意力头数
         """

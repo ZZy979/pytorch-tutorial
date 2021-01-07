@@ -54,7 +54,7 @@ class RelGraphConvHetero(nn.Module):
 
     def forward(self, g, inputs):
         """
-        :param g: DGLHeteroGraph 异构图
+        :param g: DGLGraph 异构图
         :param inputs: Dict[str, tensor(N_i, d_in)] 顶点类型到输入特征的映射
         :return: Dict[str, tensor(N_i, d_out)] 顶点类型到输出特征的映射
         """
@@ -110,7 +110,7 @@ class EntityClassification(nn.Module):
 
     def forward(self, g):
         """
-        :param g: DGLHeteroGraph 异构图
+        :param g: DGLGraph 异构图
         :return: Dict[str, tensor(N_i, d_out)] 顶点类型到顶点嵌入的映射
         """
         h = {k: self.embeds[k].weight for k in self.embeds}
