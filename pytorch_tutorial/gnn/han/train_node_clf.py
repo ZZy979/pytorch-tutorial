@@ -27,6 +27,8 @@ def train(args):
         data = HETERO_DATASET[args.dataset]()
         g = data[0]
         gs = [dgl.metapath_reachable_graph(g, metapath) for metapath in data.metapaths]
+        for i in range(len(gs)):
+            gs[i] = dgl.add_self_loop(dgl.remove_self_loop(gs[i]))
         ntype = data.predict_ntype
         num_classes = data.num_classes
         features = g.nodes[ntype].data['feat']
