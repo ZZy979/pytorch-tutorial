@@ -28,6 +28,7 @@ class DBLPFourAreaDataset(DGLDataset):
     -----
     * num_classes: 类别数
     * metapaths: 使用的元路径
+    * predict_ntype: 预测顶点类型
 
     author顶点属性
     -----
@@ -57,10 +58,10 @@ class DBLPFourAreaDataset(DGLDataset):
             download(self.url + file, os.path.join(self.raw_path, file))
 
     def save(self):
-        save_graphs(self._cache_file, [self.g])
+        save_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'), [self.g])
 
     def load(self):
-        graphs, _ = load_graphs(self._cache_file)
+        graphs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         self.g = graphs[0]
         for k in ('train_mask', 'val_mask', 'test_mask'):
             self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
@@ -173,7 +174,7 @@ class DBLPFourAreaDataset(DGLDataset):
         self.g.nodes['conf'].data['label'] = torch.tensor(self.confs['label'].to_list())
 
     def has_cache(self):
-        return os.path.exists(self._cache_file)
+        return os.path.exists(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
 
     def __getitem__(self, idx):
         if idx != 0:
@@ -192,12 +193,8 @@ class DBLPFourAreaDataset(DGLDataset):
         return [['ap', 'pa'], ['ap', 'pc', 'cp', 'pa'], ['ap', 'pt', 'tp', 'pa']]
 
     @property
-    def _raw_file2(self):
-        return os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat')
-
-    @property
-    def _cache_file(self):
-        return os.path.join(self.save_path, self.name + '.bin')
+    def predict_ntype(self):
+        return 'author'
 
 
 class DBLP4057Dataset(DGLDataset):

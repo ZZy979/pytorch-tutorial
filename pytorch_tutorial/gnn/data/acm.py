@@ -24,6 +24,7 @@ class ACMDataset(DGLDataset):
     -----
     * num_classes: 类别数
     * metapaths: 使用的元路径
+    * predict_ntype: 预测顶点类型
 
     paper顶点属性
     -----
@@ -122,6 +123,10 @@ class ACMDataset(DGLDataset):
     @property
     def metapaths(self):
         return [['pa', 'ap'], ['pf', 'fp']]
+
+    @property
+    def predict_ntype(self):
+        return 'paper'
 
 
 class ACM3025Dataset(DGLDataset):
