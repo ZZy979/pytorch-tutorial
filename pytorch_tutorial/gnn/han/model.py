@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from dgl.nn.pytorch import GATConv
+from dgl.nn import GATConv
 
 
 class SemanticAttention(nn.Module):
@@ -70,10 +70,10 @@ class HANLayer(nn.Module):
         return z
 
 
-class NodeClassification(nn.Module):
+class HAN(nn.Module):
 
     def __init__(self, num_metapaths, in_dim, hidden_dim, out_dim, num_heads, dropout):
-        """HAN顶点分类模型
+        """HAN模型
 
         :param num_metapaths: int 元路径个数
         :param in_dim: int 输入特征维数

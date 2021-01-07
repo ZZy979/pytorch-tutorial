@@ -1,13 +1,15 @@
 import argparse
+from functools import partial
 
 import dgl
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from sklearn.metrics import f1_score
+from sklearn.cluster import KMeans
+from sklearn.metrics import f1_score, normalized_mutual_info_score, adjusted_rand_score
 
 from pytorch_tutorial.gnn.data import *
-from pytorch_tutorial.gnn.han.model import NodeClassification
+from pytorch_tutorial.gnn.han.model import HAN
 from pytorch_tutorial.gnn.utils import set_random_seed
 
 DATASET = {
@@ -46,10 +48,18 @@ def train(args):
         val_mask = gs[0].ndata['val_mask']
         test_mask = gs[0].ndata['test_mask']
 
-    model = NodeClassification(
+    model = HAN(
         len(gs), features.shape[1], args.num_hidden, num_classes, args.num_heads, args.dropout
     )
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+    score = clf_score if args.task == 'clf' else partial(cluster_score, num_classes=num_classes)
+    if args.task == 'clf':
+        metrics = 'Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f}' \
+                  ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'
+    else:
+        metrics = 'Epoch {:d} | Train Loss {:.4f} | Train NMI {:.4f} | Train ARI {:.4f}' \
+                  ' | Val NMI {:.4f} | Val ARI {:.4f}'
     for epoch in range(args.epochs):
         model.train()
         logits = model(gs, features)
@@ -58,38 +68,42 @@ def train(args):
         loss.backward()
         optimizer.step()
 
-        train_acc, train_micro_f1, train_macro_f1 = score(logits[train_mask], labels[train_mask])
-        val_acc, val_micro_f1, val_macro_f1 = score(logits[val_mask], labels[val_mask])
-        print(
-            'Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f} | '
-            'Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'.format(
-                epoch, loss.item(), train_micro_f1, train_macro_f1, val_micro_f1, val_macro_f1
-            )
-        )
+        train_metrics = score(logits[train_mask], labels[train_mask])
+        val_metrics = score(logits[val_mask], labels[val_mask])
+        print(metrics.format(epoch, loss.item(), *train_metrics, *val_metrics))
 
-    test_acc, test_micro_f1, test_macro_f1 = evaluate(model, gs, features, labels, test_mask)
-    print('Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'.format(test_micro_f1, test_macro_f1))
+    test_metrics = evaluate(model, gs, features, labels, test_mask, score)
+    if args.task == 'clf':
+        print('Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'.format(*test_metrics))
+    else:
+        print('Test NMI {:.4f} | Test ARI {:.4f}'.format(*test_metrics))
 
 
-def score(logits, labels):
+def clf_score(logits, labels):
     prediction = torch.argmax(logits, dim=1).long().numpy()
     labels = labels.numpy()
-    accuracy = (prediction == labels).sum() / len(prediction)
     micro_f1 = f1_score(labels, prediction, average='micro')
     macro_f1 = f1_score(labels, prediction, average='macro')
-    return accuracy, micro_f1, macro_f1
+    return micro_f1, macro_f1
 
 
-def evaluate(model, gs, features, labels, mask):
+def cluster_score(logits, labels, num_classes):
+    prediction = KMeans(n_clusters=num_classes).fit_predict(logits.detach().numpy())
+    labels = labels.numpy()
+    nmi = normalized_mutual_info_score(labels, prediction)
+    ari = adjusted_rand_score(labels, prediction)
+    return nmi, ari
+
+
+def evaluate(model, gs, features, labels, mask, score):
     model.eval()
     with torch.no_grad():
         logits = model(gs, features)
-    accuracy, micro_f1, macro_f1 = score(logits[mask], labels[mask])
-    return accuracy, micro_f1, macro_f1
+    return score(logits[mask], labels[mask])
 
 
 def main():
-    parser = argparse.ArgumentParser('HAN Node Classification')
+    parser = argparse.ArgumentParser('HAN Node Classification or Clustering')
     parser.add_argument('--seed', type=int, default=1, help='random seed')
     parser.add_argument('--dataset', choices=['acm', 'dblp'], default='acm', help='dataset')
     parser.add_argument(
@@ -100,6 +114,7 @@ def main():
         '--num-heads', type=int, default=8, help='number of attention heads in node-level attention'
     )
     parser.add_argument('--dropout', type=float, default=0.6, help='dropout probability')
+    parser.add_argument('--task', choices=['clf', 'cluster'], default='clf', help='training task')
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.005, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=0.001, help='weight decay')
