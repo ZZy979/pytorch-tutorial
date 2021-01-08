@@ -10,6 +10,8 @@
 * logistic_regression.py - [逻辑回归](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_logistic_regression/)
 * fnn.py - [前馈神经网络](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_feedforward_neuralnetwork/)
 * cnn.py - [卷积神经网络](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_convolutional_neuralnetwork/)
+* rnn.py - [循环神经网络](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_recurrent_neuralnetwork/)
+* lstm.py - [LSTM](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_lstm_neuralnetwork/)
 
 ## gnn - 图神经网络
 ### dgl - [DGL官方文档示例](https://docs.dgl.ai/)
