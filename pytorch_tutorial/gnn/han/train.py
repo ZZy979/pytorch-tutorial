@@ -14,12 +14,14 @@ from pytorch_tutorial.gnn.utils import set_random_seed
 
 DATASET = {
     'acm': ACM3025Dataset,
-    'dblp': DBLP4057Dataset
+    'dblp': DBLP4057Dataset,
+    'imdb': IMDb5kDataset
 }
 
 HETERO_DATASET = {
     'acm': ACMDataset,
-    'dblp': DBLPFourAreaDataset
+    'dblp': DBLPFourAreaDataset,
+    'imdb': IMDbDataset
 }
 
 
@@ -105,7 +107,7 @@ def evaluate(model, gs, features, labels, mask, score):
 def main():
     parser = argparse.ArgumentParser('HAN Node Classification or Clustering')
     parser.add_argument('--seed', type=int, default=1, help='random seed')
-    parser.add_argument('--dataset', choices=['acm', 'dblp'], default='acm', help='dataset')
+    parser.add_argument('--dataset', choices=['acm', 'dblp', 'imdb'], default='acm', help='dataset')
     parser.add_argument(
         '--hetero', action='store_true', help='Use heterogeneous graph dataset'
     )
