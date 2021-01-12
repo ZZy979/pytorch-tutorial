@@ -20,6 +20,7 @@
 * edge_clf.py, edge_clf_hetero.py, edge_type_hetero.py - [边分类/回归](https://docs.dgl.ai/guide/training-edge.html)
 * link_pred.py, link_pred_hetero.py - [连接预测](https://docs.dgl.ai/guide/training-link.html)
 * graph_clf.py, graph_clf_hetero.py - [图分类](https://docs.dgl.ai/guide/training-graph.html)
+* node_clf_mb.py, node_clf_hetero_mb.py - [使用邻居采样的顶点分类](https://docs.dgl.ai/guide/minibatch-node.html)
 
 ### GNN模型
 * gcn - Graph Convolutional Network (GCN)
