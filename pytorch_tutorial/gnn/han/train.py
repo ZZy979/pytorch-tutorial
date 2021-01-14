@@ -1,16 +1,13 @@
 import argparse
-from functools import partial
 
 import dgl
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from sklearn.cluster import KMeans
-from sklearn.metrics import f1_score, normalized_mutual_info_score, adjusted_rand_score
 
 from pytorch_tutorial.gnn.data import *
 from pytorch_tutorial.gnn.han.model import HAN
-from pytorch_tutorial.gnn.utils import set_random_seed
+from pytorch_tutorial.gnn.utils import set_random_seed, micro_macro_f1_score, nmi_ari_score
 
 DATASET = {
     'acm': ACM3025Dataset,
@@ -55,7 +52,7 @@ def train(args):
     )
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    score = clf_score if args.task == 'clf' else partial(cluster_score, num_classes=num_classes)
+    score = micro_macro_f1_score if args.task == 'clf' else nmi_ari_score
     if args.task == 'clf':
         metrics = 'Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f}' \
                   ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'
@@ -79,22 +76,6 @@ def train(args):
         print('Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'.format(*test_metrics))
     else:
         print('Test NMI {:.4f} | Test ARI {:.4f}'.format(*test_metrics))
-
-
-def clf_score(logits, labels):
-    prediction = torch.argmax(logits, dim=1).long().numpy()
-    labels = labels.numpy()
-    micro_f1 = f1_score(labels, prediction, average='micro')
-    macro_f1 = f1_score(labels, prediction, average='macro')
-    return micro_f1, macro_f1
-
-
-def cluster_score(logits, labels, num_classes):
-    prediction = KMeans(n_clusters=num_classes).fit_predict(logits.detach().numpy())
-    labels = labels.numpy()
-    nmi = normalized_mutual_info_score(labels, prediction)
-    ari = adjusted_rand_score(labels, prediction)
-    return nmi, ari
 
 
 def evaluate(model, gs, features, labels, mask, score):

@@ -1,4 +1,6 @@
 import torch
+from sklearn.cluster import KMeans
+from sklearn.metrics import f1_score, normalized_mutual_info_score, adjusted_rand_score
 
 
 def accuracy(logits, labels):
@@ -9,6 +11,35 @@ def accuracy(logits, labels):
     :return: float 准确率
     """
     return torch.sum(torch.argmax(logits, dim=1) == labels).item() * 1.0 / len(labels)
+
+
+def micro_macro_f1_score(logits, labels):
+    """计算Micro-F1和Macro-F1得分
+
+    :param logits: tensor(N, C) 预测概率，N为样本数，C为类别数
+    :param labels: tensor(N) 正确标签
+    :return: float, float Micro-F1和Macro-F1得分
+    """
+    prediction = torch.argmax(logits, dim=1).long().numpy()
+    labels = labels.numpy()
+    micro_f1 = f1_score(labels, prediction, average='micro')
+    macro_f1 = f1_score(labels, prediction, average='macro')
+    return micro_f1, macro_f1
+
+
+def nmi_ari_score(logits, labels):
+    """计算NMI和ARI得分
+
+    :param logits: tensor(N, C) 预测概率，N为样本数，C为类别数
+    :param labels: tensor(N) 正确标签
+    :return: float, float NMI和ARI得分
+    """
+    num_classes = logits.shape[1]
+    prediction = KMeans(n_clusters=num_classes).fit_predict(logits.detach().numpy())
+    labels = labels.numpy()
+    nmi = normalized_mutual_info_score(labels, prediction)
+    ari = adjusted_rand_score(labels, prediction)
+    return nmi, ari
 
 
 def mean_reciprocal_rank(predicts, answers):

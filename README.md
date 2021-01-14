@@ -40,3 +40,6 @@
 [论文链接](https://arxiv.org/abs/1903.07293)
 | [官方代码](https://github.com/Jhy1993/HAN)
 | [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/han)
+* magnn - Metapath Aggregated Graph Neural Network (MAGNN)
+[论文链接](https://arxiv.org/pdf/2002.01680)
+| [官方代码](https://github.com/cynricfu/MAGNN)

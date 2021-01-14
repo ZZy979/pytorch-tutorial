@@ -1,10 +1,10 @@
 import random
 
 import numpy as np
-import torch
 
-from .data import load_citation_dataset, load_rdf_dataset, load_kg_dataset
-from .metrics import accuracy, mean_reciprocal_rank, hits_at
+from .data import *
+from .metapath import *
+from .metrics import *
 
 
 def set_random_seed(seed):

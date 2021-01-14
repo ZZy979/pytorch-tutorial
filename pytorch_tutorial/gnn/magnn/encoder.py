@@ -22,7 +22,7 @@ class LinearEncoder(MetapathInstanceEncoder):
         return self.fc(feat.mean(dim=1))
 
 
-def get_metapath_instance_encoder(name, in_dim, out_dim):
+def get_encoder(name, in_dim, out_dim):
     if name == 'linear':
         return LinearEncoder(in_dim, out_dim)
     else:
