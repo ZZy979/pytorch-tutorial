@@ -11,7 +11,7 @@ import torch.optim as optim
 from dgl.data import CiteseerGraphDataset
 from dgl.nn import SAGEConv
 
-from pytorch_tutorial.gnn.utils import accuracy
+from gnn.utils import accuracy
 
 
 class SAGE(nn.Module):

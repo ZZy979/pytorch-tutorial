@@ -9,15 +9,7 @@ from dgl.data import PPIDataset
 from sklearn.metrics import f1_score
 from torch.utils.data.dataloader import DataLoader
 
-from pytorch_tutorial.gnn.gat.model import GAT
-
-
-def evaluate(model, g, feats, labels):
-    with torch.no_grad():
-        model.eval()
-        logits = model(g, feats)
-        predict = np.where(logits.data.numpy() >= 0., 1, 0)
-        return f1_score(labels.data.numpy(), predict, average='micro')
+from gnn.gat.model import GAT
 
 
 def train(args):
@@ -31,7 +23,8 @@ def train(args):
     num_feats = train_dataset[0].ndata['feat'].shape[1]
     num_classes = train_dataset.num_labels
 
-    model = GAT(num_feats, 256, num_classes, [4, 4, 6])
+    num_heads = [args.num_heads] * (args.num_layers - 1) + [args.num_out_heads]
+    model = GAT(num_feats, args.num_hidden, num_classes, num_heads, args.dropout)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     for epoch in range(args.epochs):
         model.train()
@@ -57,9 +50,26 @@ def train(args):
     print('Test F1-score {:.4f}'.format(np.array(test_scores).mean()))
 
 
+def evaluate(model, g, feats, labels):
+    with torch.no_grad():
+        model.eval()
+        logits = model(g, feats)
+        predict = np.where(logits.detach().numpy() >= 0., 1, 0)
+    return f1_score(labels.numpy(), predict, average='micro')
+
+
 def main():
     parser = argparse.ArgumentParser(description='GAT Inductive Training')
     parser.add_argument('--batch-size', type=int, default=2, help='batch size')
+    parser.add_argument('--num-layers', type=int, default=3, help='number of GAT layers')
+    parser.add_argument('--num-hidden', type=int, default=256, help='number of hidden units')
+    parser.add_argument(
+        '--num-heads', type=int, default=4, help='number of attention heads in hidden layers'
+    )
+    parser.add_argument(
+        '--num-out-heads', type=int, default=6, help='number of attention heads in output layer'
+    )
+    parser.add_argument('--dropout', type=float, default=0., help='dropout probability')
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.005, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=0., help='weight decay')

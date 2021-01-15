@@ -5,9 +5,9 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.data import *
-from pytorch_tutorial.gnn.han.model import HAN
-from pytorch_tutorial.gnn.utils import set_random_seed, micro_macro_f1_score, nmi_ari_score
+from gnn.data import *
+from gnn.han.model import HAN
+from gnn.utils import set_random_seed, micro_macro_f1_score, nmi_ari_score
 
 DATASET = {
     'acm': ACM3025Dataset,

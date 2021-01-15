@@ -6,8 +6,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from dgl.dataloading.negative_sampler import Uniform
 
-from pytorch_tutorial.gnn.rgcn.model import LinkPrediction
-from pytorch_tutorial.gnn.utils import load_kg_dataset
+from gnn.rgcn.model import LinkPrediction
+from gnn.utils import load_kg_dataset
 
 
 def train(args):

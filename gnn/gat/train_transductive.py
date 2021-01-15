@@ -1,11 +1,12 @@
 import argparse
 
 import dgl
+import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.gat.model import GAT
-from pytorch_tutorial.gnn.utils import load_citation_dataset, accuracy
+from gnn.gat.model import GAT
+from gnn.utils import load_citation_dataset, accuracy
 
 
 def train(args):
@@ -21,7 +22,8 @@ def train(args):
     g = dgl.remove_self_loop(g)
     g = dgl.add_self_loop(g)
 
-    model = GAT(features.shape[1], 8, data.num_classes, [8, args.num_out_heads])
+    num_heads = [args.num_heads] * (args.num_layers - 1) + [args.num_out_heads]
+    model = GAT(features.shape[1], args.num_hidden, data.num_classes, num_heads, args.dropout)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     for epoch in range(args.epochs):
         model.train()
@@ -32,14 +34,21 @@ def train(args):
         optimizer.step()
 
         train_acc = accuracy(logits[train_mask], labels[train_mask])
-        val_acc = accuracy(logits[val_mask], labels[val_mask])
-        print('Epoch {:04d} | Loss {:.4f} | TrainAcc {:.4f} | ValAcc {:.4f}'.format(
+        val_acc = evaluate(model, g, features, labels, val_mask)
+        print('Epoch {:04d} | Loss {:.4f} | Train Acc {:.4f} | Val Acc {:.4f}'.format(
             epoch, loss.item(), train_acc, val_acc
         ))
 
     print()
-    acc = accuracy(model(g, features)[test_mask], labels[test_mask])
+    acc = evaluate(model, g, features, labels, test_mask)
     print('Test Accuracy {:.4f}'.format(acc))
+
+
+def evaluate(model, g, features, labels, mask):
+    model.eval()
+    with torch.no_grad():
+        logits = model(g, features)
+    return accuracy(logits[mask], labels[mask])
 
 
 def main():
@@ -47,10 +56,16 @@ def main():
     parser.add_argument(
         '--dataset', choices=['cora', 'citeseer', 'pubmed'], default='cora', help='dataset'
     )
+    parser.add_argument('--num-layers', type=int, default=2, help='number of GAT layers')
+    parser.add_argument('--num-hidden', type=int, default=8, help='number of hidden units')
+    parser.add_argument(
+        '--num-heads', type=int, default=8, help='number of attention heads in hidden layers'
+    )
     parser.add_argument(
         '--num-out-heads', type=int, default=1, help='number of attention heads in output layer'
     )
-    parser.add_argument('--epochs', type=int, default=40, help='number of training epochs')
+    parser.add_argument('--dropout', type=float, default=0.6, help='dropout probability')
+    parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.005, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=5e-4, help='weight decay')
     args = parser.parse_args()

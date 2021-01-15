@@ -11,8 +11,8 @@ import torch.optim as optim
 from dgl.data import DGLDataset
 from torch.utils.data import DataLoader
 
-from pytorch_tutorial.gnn.dgl.graph_clf import collate
-from pytorch_tutorial.gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.dgl.graph_clf import collate
+from gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
 
 
 class HeteroClassifier(nn.Module):

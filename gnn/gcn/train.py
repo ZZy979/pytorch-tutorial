@@ -4,8 +4,8 @@ import dgl
 import torch.nn as nn
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.gcn.model import GCN
-from pytorch_tutorial.gnn.utils import load_citation_dataset, accuracy
+from gnn.gcn.model import GCN
+from gnn.utils import load_citation_dataset, accuracy
 
 
 def train(args):
@@ -23,7 +23,7 @@ def train(args):
 
     model = GCN(features.shape[1], args.num_hidden, data.num_classes)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
     for epoch in range(args.epochs):
         model.train()

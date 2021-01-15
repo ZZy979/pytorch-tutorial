@@ -9,7 +9,7 @@ import torch.optim as optim
 from dgl.dataloading import MultiLayerFullNeighborSampler, NodeCollator, DataLoader
 from dgl.nn import HeteroGraphConv, GraphConv
 
-from pytorch_tutorial.gnn.dgl.node_clf_hetero import build_user_item_graph
+from gnn.dgl.node_clf_hetero import build_user_item_graph
 
 
 class RGCN(nn.Module):

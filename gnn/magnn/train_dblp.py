@@ -6,9 +6,9 @@ import torch.optim as optim
 from dgl.dataloading import NodeCollator, MultiLayerNeighborSampler
 from torch.utils.data.dataloader import DataLoader
 
-from pytorch_tutorial.gnn.data import DBLPFourAreaDataset
-from pytorch_tutorial.gnn.magnn.model import MAGNNMinibatch
-from pytorch_tutorial.gnn.utils import set_random_seed, metapath_based_graph, to_ntype_list, \
+from gnn.data import DBLPFourAreaDataset
+from gnn.magnn.model import MAGNNMinibatch
+from gnn.utils import set_random_seed, metapath_based_graph, to_ntype_list, \
     micro_macro_f1_score
 
 

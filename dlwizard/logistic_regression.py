@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.optim as optim
 
-from pytorch_tutorial.dlwizard.utils import train_mnist
+from dlwizard.common import train_mnist
 
 
 # https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_logistic_regression/

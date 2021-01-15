@@ -7,9 +7,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.dgl.edge_clf_hetero import HeteroDotProductPredictor
-from pytorch_tutorial.gnn.dgl.link_pred import compute_loss
-from pytorch_tutorial.gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.dgl.edge_clf_hetero import HeteroDotProductPredictor
+from gnn.dgl.link_pred import compute_loss
+from gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
 
 
 def construct_negative_graph(graph, k, etype):

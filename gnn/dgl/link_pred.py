@@ -8,8 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.dgl.edge_clf import DotProductPredictor
-from pytorch_tutorial.gnn.dgl.node_clf import SAGE
+from gnn.dgl.edge_clf import DotProductPredictor
+from gnn.dgl.node_clf import SAGE
 
 
 def construct_negative_graph(graph, k):

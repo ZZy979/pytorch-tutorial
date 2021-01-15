@@ -4,8 +4,8 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from pytorch_tutorial.gnn.rgcn.model_hetero import EntityClassification
-from pytorch_tutorial.gnn.utils import load_rdf_dataset, accuracy
+from gnn.rgcn.model_hetero import EntityClassification
+from gnn.utils import load_rdf_dataset, accuracy
 
 
 def train(args):
