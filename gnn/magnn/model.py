@@ -124,7 +124,7 @@ class MAGNNLayerNtypeSpecific(nn.Module):
                 in_dim, out_dim, num_heads, encoder, attn_drop, activation=F.elu
             ) for _ in range(num_metapaths)
         ])
-        self.inter_metapath_agg = InterMetapathAggregation(num_heads * in_dim, attn_hidden_dim)
+        self.inter_metapath_agg = InterMetapathAggregation(num_heads * out_dim, attn_hidden_dim)
 
     def forward(self, gs, node_feat, edge_feat_name):
         """
@@ -162,7 +162,7 @@ class MAGNNLayer(nn.Module):
                 len(metapaths[ntype]), in_dim, out_dim, num_heads, encoder, attn_drop=attn_drop
             ) for ntype in metapaths
         })
-        self.fc = nn.Linear(num_heads * in_dim, out_dim)
+        self.fc = nn.Linear(num_heads * out_dim, out_dim)
 
     def forward(self, gs, node_feats):
         """
@@ -207,9 +207,8 @@ class MAGNNMinibatch(nn.Module):
         })
         self.feat_drop = nn.Dropout(dropout)
         self.magnn = MAGNNLayer(
-            {self.ntype: metapaths}, hidden_dim, hidden_dim, num_heads, encoder, dropout
+            {self.ntype: metapaths}, hidden_dim, out_dim, num_heads, encoder, dropout
         )
-        self.fc = nn.Linear(hidden_dim, out_dim)
 
     def forward(self, blocks, node_feats):
         """
@@ -221,6 +220,48 @@ class MAGNNMinibatch(nn.Module):
             ntype: self.feat_drop(trans(node_feats[ntype]))
             for ntype, trans in self.feat_trans.items()
         }  # Dict[str, tensor(N_i, d_hid)]
-        h = self.magnn({self.ntype: blocks}, hs)[self.ntype]  # tensor(N, d_hid)
-        out = self.fc(h)  # tensor(N, d_out)
+        out = self.magnn({self.ntype: blocks}, hs)[self.ntype]  # tensor(N, d_out)
         return out
+
+
+class MAGNNMultiLayer(nn.Module):
+
+    def __init__(self, num_layers, metapaths, in_dims, hidden_dim, out_dim, num_heads, encoder, dropout=0.0):
+        """多层MAGNN模型，由特征转换、多个MAGNN层和输出层组成。
+
+        :param num_layers: int MAGNN层数
+        :param metapaths: Dict[str, List[List[str]]] 顶点类型到元路径列表的映射，元路径表示为顶点类型列表
+        :param in_dims: Dict[str, int] 顶点类型到输入特征维数的映射
+        :param hidden_dim: int 隐含特征维数
+        :param out_dim: int 输出特征维数
+        :param num_heads: 注意力头数K
+        :param encoder: str 元路径实例编码器名称
+        :param dropout: float, optional Dropout概率，默认为0
+        """
+        super().__init__()
+        self.feat_trans = nn.ModuleDict({
+            ntype: nn.Linear(in_dims[ntype], hidden_dim) for ntype in in_dims
+        })
+        self.feat_drop = nn.Dropout(dropout)
+        self.layers = nn.ModuleList([
+            MAGNNLayer(metapaths, hidden_dim, hidden_dim, num_heads, encoder, dropout)
+            for _ in range(num_layers - 1)
+        ])
+        self.layers.append(MAGNNLayer(
+            metapaths, hidden_dim, out_dim, num_heads, encoder, dropout
+        ))
+
+    def forward(self, gs, node_feats):
+        """
+        :param gs: Dict[str, List[DGLGraph]] 顶点类型到其对应的基于每条元路径的邻居组成的图的映射
+        :param node_feats: Dict[str, tensor(N_i, d_in)] 顶点类型到输入顶点特征的映射，N_i为对应类型的顶点个数
+        :return: Dict[str, tensor(N_i, d_out)] 顶点类型到最终顶点嵌入的映射
+        """
+        hs = {
+            ntype: self.feat_drop(trans(node_feats[ntype]))
+            for ntype, trans in self.feat_trans.items()
+        }  # Dict[str, tensor(N_i, d_hid)]
+        for i in range(len(self.layers) - 1):
+            hs = self.layers[i](gs, hs)  # Dict[str, tensor(N_i, d_hid)]
+            hs = {ntype: F.elu(h) for ntype, h in hs.items()}
+        return self.layers[-1](gs, hs)

@@ -12,6 +12,15 @@ class MetapathInstanceEncoder(nn.Module):
         raise NotImplementedError
 
 
+class MeanEncoder(MetapathInstanceEncoder):
+
+    def __init__(self, in_dim, out_dim):
+        super().__init__()
+
+    def forward(self, feat):
+        return feat.mean(dim=1)
+
+
 class LinearEncoder(MetapathInstanceEncoder):
 
     def __init__(self, in_dim, out_dim):
@@ -22,8 +31,14 @@ class LinearEncoder(MetapathInstanceEncoder):
         return self.fc(feat.mean(dim=1))
 
 
+ENCODERS = {
+    'mean': MeanEncoder,
+    'linear': LinearEncoder
+}
+
+
 def get_encoder(name, in_dim, out_dim):
-    if name == 'linear':
-        return LinearEncoder(in_dim, out_dim)
+    if name in ENCODERS:
+        return ENCODERS[name](in_dim, out_dim)
     else:
-        raise ValueError('非法编码器名称' + name)
+        raise ValueError('非法编码器名称{}，可选项为{}'.format(name, list(ENCODERS.keys())))

@@ -7,6 +7,7 @@ from dgl.dataloading import NodeCollator, MultiLayerNeighborSampler
 from torch.utils.data.dataloader import DataLoader
 
 from gnn.data import DBLPFourAreaDataset
+from gnn.magnn.encoder import ENCODERS
 from gnn.magnn.model import MAGNNMinibatch
 from gnn.utils import set_random_seed, metapath_based_graph, to_ntype_list, \
     micro_macro_f1_score
@@ -59,7 +60,7 @@ def train(args):
         print('Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f}'.format(
             epoch, torch.tensor(losses).mean().item(), *train_metrics
         ))
-        if epoch % 10 == 0:
+        if (epoch + 1) % 10 == 0:
             val_metrics = evaluate(out_shape, collators, val_dataloader, model, features, labels)
             print('Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'.format(*val_metrics))
 
@@ -90,7 +91,8 @@ def main():
     parser.add_argument('--num-hidden', type=int, default=64, help='dimension of hidden state')
     parser.add_argument('--num-heads', type=int, default=8, help='number of attention heads')
     parser.add_argument(
-        '--encoder', choices=['linear'], default='linear', help='metapath instance encoder'
+        '--encoder', choices=list(ENCODERS.keys()), default='linear',
+        help='metapath instance encoder'
     )
     parser.add_argument('--dropout', type=float, default=0.5, help='feature and attention dropout')
     parser.add_argument('--epochs', type=int, default=100, help='number of training epochs')
