@@ -11,7 +11,9 @@ from dgl.nn import GATConv
 
 class GAT(nn.Module):
 
-    def __init__(self, in_dim, hidden_dim, out_dim, num_heads, dropout, activation=None):
+    def __init__(
+            self, in_dim, hidden_dim, out_dim, num_heads, dropout,
+            residual=False, activation=None):
         """GAT模型
 
         :param in_dim: int 输入特征维数
@@ -19,6 +21,7 @@ class GAT(nn.Module):
         :param out_dim: int 输出特征维数
         :param num_heads: List[int] 每一层的注意力头数，长度等于层数
         :param dropout: float Dropout概率
+        :param residual: bool, optional 是否使用残差连接，默认为False
         :param activation: callable, optional 输出层激活函数
         :raise ValueError: 如果层数（即num_heads的长度）小于2
         """
@@ -28,16 +31,16 @@ class GAT(nn.Module):
             raise ValueError('层数至少为2，实际为{}'.format(num_layers))
         self.layers = nn.ModuleList()
         self.layers.append(GATConv(
-            in_dim, hidden_dim, num_heads[0], dropout, dropout, activation=F.elu
+            in_dim, hidden_dim, num_heads[0], dropout, dropout, residual=residual, activation=F.elu
         ))
         for i in range(1, num_layers - 1):
             self.layers.append(GATConv(
                 num_heads[i - 1] * hidden_dim, hidden_dim, num_heads[i], dropout, dropout,
-                activation=F.elu
+                residual=residual, activation=F.elu
             ))
         self.layers.append(GATConv(
             num_heads[-2] * hidden_dim, out_dim, num_heads[-1], dropout, dropout,
-            activation=activation
+            residual=residual, activation=activation
         ))
 
     def forward(self, g, h):

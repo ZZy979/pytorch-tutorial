@@ -1,4 +1,9 @@
 # PyTorch示例代码
+## 运行方式
+使用Python的`-m`参数
+
+例如：要运行gnn/gcn/train.py则执行 `python -m gnn.gcn.train`
+
 ## beginner - [官方教程](https://pytorch.org/tutorials/)
 * two_layer_net.py - [两层全连接网络](https://github.com/pytorch/tutorials/blob/09460601a9f914511d87c12c4e0b04dc21df3086/beginner_source/pytorch_with_examples.rst)
 （[原链接](https://pytorch.org/tutorials/beginner/pytorch_with_examples.html) 已替换为其他示例）

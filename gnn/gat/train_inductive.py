@@ -24,19 +24,24 @@ def train(args):
     num_classes = train_dataset.num_labels
 
     num_heads = [args.num_heads] * (args.num_layers - 1) + [args.num_out_heads]
-    model = GAT(num_feats, args.num_hidden, num_classes, num_heads, args.dropout)
+    model = GAT(num_feats, args.num_hidden, num_classes, num_heads, args.dropout, residual=True)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     for epoch in range(args.epochs):
         model.train()
         losses = []
+        train_scores = []
         for bg in train_dataloader:
             logits = model(bg, bg.ndata['feat'])
-            loss = F.binary_cross_entropy_with_logits(logits, bg.ndata['label'].float())
+            labels = bg.ndata['label'].float()
+            loss = F.binary_cross_entropy_with_logits(logits, labels)
             losses.append(loss.item())
+            train_scores.append(micro_f1_score(logits, labels))
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        print('Epoch {:04d} | Loss {:.4f}'.format(epoch, np.array(losses).mean()))
+        print('Epoch {:04d} | Loss {:.4f} | Train F1-score {:.4f}'.format(
+            epoch, np.array(losses).mean(), np.array(train_scores).mean()
+        ))
         if epoch % 5 == 0:
             val_scores = [
                 evaluate(model, bg, bg.ndata['feat'], bg.ndata['label']) for bg in valid_dataloader
@@ -50,12 +55,16 @@ def train(args):
     print('Test F1-score {:.4f}'.format(np.array(test_scores).mean()))
 
 
+def micro_f1_score(logits, labels):
+    predict = np.where(logits.detach().numpy() >= 0., 1, 0)
+    return f1_score(labels.numpy(), predict, average='micro')
+
+
 def evaluate(model, g, feats, labels):
     with torch.no_grad():
         model.eval()
         logits = model(g, feats)
-        predict = np.where(logits.detach().numpy() >= 0., 1, 0)
-    return f1_score(labels.numpy(), predict, average='micro')
+    return micro_f1_score(logits, labels)
 
 
 def main():
@@ -70,7 +79,7 @@ def main():
         '--num-out-heads', type=int, default=6, help='number of attention heads in output layer'
     )
     parser.add_argument('--dropout', type=float, default=0., help='dropout probability')
-    parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
+    parser.add_argument('--epochs', type=int, default=50, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.005, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=0., help='weight decay')
     args = parser.parse_args()
