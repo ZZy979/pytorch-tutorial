@@ -4,7 +4,7 @@
 
 例如：要运行gnn/gcn/train.py则执行 `python -m gnn.gcn.train`
 
-## beginner - [官方教程](https://pytorch.org/tutorials/)
+## beginner - [PyTorch官方教程](https://pytorch.org/tutorials/)
 * two_layer_net.py - [两层全连接网络](https://github.com/pytorch/tutorials/blob/09460601a9f914511d87c12c4e0b04dc21df3086/beginner_source/pytorch_with_examples.rst)
 （[原链接](https://pytorch.org/tutorials/beginner/pytorch_with_examples.html) 已替换为其他示例）
 * neural_networks_tutorial.py - [神经网络示例](https://pytorch.org/tutorials/beginner/blitz/neural_networks_tutorial.html)
@@ -48,3 +48,11 @@
 * magnn - Metapath Aggregated Graph Neural Network (MAGNN)
 [论文链接](https://arxiv.org/pdf/2002.01680)
 | [官方代码](https://github.com/cynricfu/MAGNN)
+
+## nlp - 自然语言处理
+### tfms - [transformers官方示例](https://huggingface.co/transformers/)
+* seq_clf_pipeline.py, seq_clf_model.py - [语义分析](https://huggingface.co/transformers/task_summary.html#sequence-classification)
+* eqa_pipeline.py, eqa_model.py - [提取式问答](https://huggingface.co/transformers/task_summary.html#extractive-question-answering)
+* masked_lm_pipeline.py, masked_lm_model.py - [屏蔽语言建模](https://huggingface.co/transformers/task_summary.html#masked-language-modeling)
+* causal_lm_model.py - [因果语言建模](https://huggingface.co/transformers/task_summary.html#causal-language-modeling)
+* text_gen_pipeline.py, text_gen_model.py - [文本生成](https://huggingface.co/transformers/task_summary.html#text-generation)
