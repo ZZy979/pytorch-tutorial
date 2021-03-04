@@ -2,6 +2,7 @@ import os
 import pickle
 
 import dgl
+import dgl.function as fn
 import numpy as np
 import scipy.io as sio
 import torch
@@ -28,9 +29,17 @@ class ACMDataset(DGLDataset):
 
     paper顶点属性
     -----
-    * feat: tensor(4025, 1903)
+    * feat: tensor(4025, 1903) 关键词的词袋表示
     * label: tensor(4025)
     * train_mask, val_mask, test_mask: tensor(4025)
+
+    author顶点属性
+    -----
+    * feat: tensor(17351, 1903) 关联的论文特征的平均
+
+    field顶点属性
+    -----
+    * feat: tensor(72, 72) one-hot编码
     """
 
     def __init__(self):
@@ -104,6 +113,9 @@ class ACMDataset(DGLDataset):
         self.g.nodes['paper'].data['train_mask'] = train_mask
         self.g.nodes['paper'].data['val_mask'] = val_mask
         self.g.nodes['paper'].data['test_mask'] = test_mask
+        # author顶点的特征为其关联的paper顶点特征的平均
+        self.g.multi_update_all({'pa': (fn.copy_u('feat', 'm'), fn.mean('m', 'feat'))}, 'sum')
+        self.g.nodes['field'].data['feat'] = torch.eye(self.g.num_nodes('field'))
 
     def has_cache(self):
         return os.path.exists(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))

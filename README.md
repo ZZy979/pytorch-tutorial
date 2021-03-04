@@ -48,6 +48,9 @@
 * magnn - Metapath Aggregated Graph Neural Network (MAGNN)
 [论文链接](https://arxiv.org/pdf/2002.01680)
 | [官方代码](https://github.com/cynricfu/MAGNN)
+* hgconv - Hybrid Micro/Macro Level Convolution for Heterogeneous Graph Learning (HGConv)
+[论文链接](https://arxiv.org/pdf/2012.14722)
+| [官方代码](https://github.com/yule-BUAA/HGConv)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
