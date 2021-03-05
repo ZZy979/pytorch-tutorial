@@ -101,7 +101,9 @@ class MacroConv(nn.Module):
         out_feats = {}
         for ntype, node_feat in node_feats.items():
             rel_node_feats = [feat for rel, feat in rel_feats.items() if rel[2] == ntype]
-            if len(rel_node_feats) == 1:
+            if not rel_node_feats:
+                continue
+            elif len(rel_node_feats) == 1:
                 out_feats[ntype] = rel_node_feats[0].view(-1, self.num_heads * self.out_dim)
             else:
                 rel_node_feats = torch.stack(rel_node_feats, dim=0)  # (R, N_i, K, d_out)
@@ -182,20 +184,25 @@ class HGConvLayer(nn.Module):
         :param feats: Dict[str, tensor(N_i, d_in)] 顶点类型到输入顶点特征的映射
         :return: Dict[str, tensor(N_i, K*d_out)] 顶点类型到最终顶点嵌入的映射
         """
+        if g.is_block:
+            feats_dst = {ntype: feats[ntype][:g.num_dst_nodes(ntype)] for ntype in feats}
+        else:
+            feats_dst = feats
         rel_feats = {
             (stype, etype, dtype): self.micro_conv[str((stype, etype, dtype))](
-                g[stype, etype, dtype], feats[stype], feats[dtype],
+                g[stype, etype, dtype], feats[stype], feats_dst[dtype],
                 self.micro_fc[stype], self.micro_fc[dtype], self.micro_attn[stype]
             )
             for stype, etype, dtype in g.canonical_etypes
+            if g.num_edges((stype, etype, dtype)) > 0
         }  # {rel: tensor(N_i, K*d_out)}
         out_feats = self.macro_conv(
-            feats, rel_feats, self.macro_fc_node, self.macro_fc_rel, self.macro_attn
+            feats_dst, rel_feats, self.macro_fc_node, self.macro_fc_rel, self.macro_attn
         )  # {ntype: tensor(N_i, K*d_out)}
         if self.residual:
             for ntype in out_feats:
                 alpha = torch.sigmoid(self.res_weight[ntype])
-                inherit_feat = self.res_fc[ntype](feats[ntype])
+                inherit_feat = self.res_fc[ntype](feats_dst[ntype])
                 out_feats[ntype] = alpha * out_feats[ntype] + (1 - alpha) * inherit_feat
         return out_feats
 
