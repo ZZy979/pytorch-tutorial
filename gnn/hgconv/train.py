@@ -1,4 +1,5 @@
 import argparse
+import warnings
 
 import torch
 import torch.nn.functional as F
@@ -39,6 +40,7 @@ def train(args):
     else:
         metrics = 'Epoch {:d} | Train Loss {:.4f} | Train NMI {:.4f} | Train ARI {:.4f}' \
                   ' | Val NMI {:.4f} | Val ARI {:.4f}'
+    warnings.filterwarnings('ignore', 'Setting attributes on ParameterDict is not supported')
     for epoch in range(args.epochs):
         model.train()
         logits = model(g, features)
