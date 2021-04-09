@@ -58,7 +58,7 @@ class ACMDataset(DGLDataset):
         self.g = graphs[0]
         # save_graphs会将bool转换成uint8
         for k in ('train_mask', 'val_mask', 'test_mask'):
-            self.g.nodes['paper'].data[k] = self.g.nodes['paper'].data[k].type(torch.bool)
+            self.g.nodes['paper'].data[k] = self.g.nodes['paper'].data[k].bool()
 
     def process(self):
         data = sio.loadmat(os.path.join(self.raw_dir, 'ACM.mat'))
@@ -178,7 +178,7 @@ class ACM3025Dataset(DGLDataset):
         self.gs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         for g in self.gs:
             for k in ('train_mask', 'val_mask', 'test_mask'):
-                g.ndata[k] = g.ndata[k].type(torch.bool)
+                g.ndata[k] = g.ndata[k].bool()
 
     def process(self):
         with open(os.path.join(self.raw_dir, 'ACM3025.pkl'), 'rb') as f:

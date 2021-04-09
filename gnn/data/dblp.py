@@ -65,7 +65,7 @@ class DBLPFourAreaDataset(DGLDataset):
         graphs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         self.g = graphs[0]
         for k in ('train_mask', 'val_mask', 'test_mask'):
-            self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].type(torch.bool)
+            self.g.nodes['author'].data[k] = self.g.nodes['author'].data[k].bool()
 
     def process(self):
         self.authors, self.papers, self.confs, self.terms, \
@@ -237,7 +237,7 @@ class DBLP4057Dataset(DGLDataset):
         self.gs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         for g in self.gs:
             for k in ('train_mask', 'val_mask', 'test_mask'):
-                g.ndata[k] = g.ndata[k].type(torch.bool)
+                g.ndata[k] = g.ndata[k].bool()
 
     def process(self):
         data = sio.loadmat(os.path.join(self.raw_dir, 'DBLP4057_GAT_with_idx.mat'))

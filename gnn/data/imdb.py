@@ -62,7 +62,7 @@ class IMDbDataset(DGLDataset):
         graphs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         self.g = graphs[0]
         for k in ('train_mask', 'val_mask', 'test_mask'):
-            self.g.nodes['movie'].data[k] = self.g.nodes['movie'].data[k].type(torch.bool)
+            self.g.nodes['movie'].data[k] = self.g.nodes['movie'].data[k].bool()
 
     def process(self):
         self.data = pd.read_csv(os.path.join(self.raw_dir, 'imdb.csv'), encoding='utf8') \
@@ -195,7 +195,7 @@ class IMDb5kDataset(DGLDataset):
         self.gs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
         for g in self.gs:
             for k in ('train_mask', 'val_mask', 'test_mask'):
-                g.ndata[k] = g.ndata[k].type(torch.bool)
+                g.ndata[k] = g.ndata[k].bool()
 
     def process(self):
         data = sio.loadmat(os.path.join(self.raw_dir, 'imdb5k.mat'))

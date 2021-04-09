@@ -1,6 +1,5 @@
 import argparse
 
-import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
@@ -14,8 +13,8 @@ def train(args):
     category = data.predict_category
     num_classes = data.num_classes
     labels = g.nodes[category].data['labels']
-    train_mask = g.nodes[category].data['train_mask'].type(torch.bool)
-    test_mask = g.nodes[category].data['test_mask'].type(torch.bool)
+    train_mask = g.nodes[category].data['train_mask'].bool()
+    test_mask = g.nodes[category].data['test_mask'].bool()
 
     model = EntityClassification(
         {ntype: g.num_nodes(ntype) for ntype in g.ntypes},
