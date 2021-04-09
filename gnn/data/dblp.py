@@ -11,7 +11,8 @@ from dgl.data.utils import makedirs, download, save_graphs, load_graphs, \
 from nltk import WordNetLemmatizer
 from nltk.corpus import stopwords as nltk_stopwords
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS as sklearn_stopwords
-from sklearn.model_selection import train_test_split
+
+from gnn.utils import split_idx
 
 
 class DBLPFourAreaDataset(DGLDataset):
@@ -165,8 +166,7 @@ class DBLPFourAreaDataset(DGLDataset):
         self.g.nodes['author'].data['label'] = torch.tensor(self.authors['label'].to_list())
 
         n_authors = len(self.authors)
-        train_idx, val_idx = train_test_split(np.arange(n_authors), test_size=400, random_state=self._seed)
-        train_idx, test_idx = train_test_split(train_idx, train_size=800, random_state=self._seed)
+        train_idx, val_idx, test_idx = split_idx(np.arange(n_authors), 800, 400, self._seed)
         self.g.nodes['author'].data['train_mask'] = generate_mask_tensor(idx2mask(train_idx, n_authors))
         self.g.nodes['author'].data['val_mask'] = generate_mask_tensor(idx2mask(val_idx, n_authors))
         self.g.nodes['author'].data['test_mask'] = generate_mask_tensor(idx2mask(test_idx, n_authors))

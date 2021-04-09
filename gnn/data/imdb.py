@@ -10,7 +10,8 @@ import torch
 from dgl.data import DGLDataset
 from dgl.data.utils import download, save_graphs, load_graphs, generate_mask_tensor, idx2mask
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.model_selection import train_test_split
+
+from gnn.utils import split_idx
 
 
 class IMDbDataset(DGLDataset):
@@ -126,8 +127,7 @@ class IMDbDataset(DGLDataset):
         }, 'sum')
 
         n_movies = len(self.movies)
-        train_idx, val_idx = train_test_split(np.arange(n_movies), test_size=400, random_state=self._seed)
-        train_idx, test_idx = train_test_split(train_idx, train_size=400, random_state=self._seed)
+        train_idx, val_idx, test_idx = split_idx(np.arange(n_movies), 400, 400, self._seed)
         self.g.nodes['movie'].data['train_mask'] = generate_mask_tensor(idx2mask(train_idx, n_movies))
         self.g.nodes['movie'].data['val_mask'] = generate_mask_tensor(idx2mask(val_idx, n_movies))
         self.g.nodes['movie'].data['test_mask'] = generate_mask_tensor(idx2mask(test_idx, n_movies))

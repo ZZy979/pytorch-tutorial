@@ -54,6 +54,9 @@
 * hgconv - Hybrid Micro/Macro Level Convolution for Heterogeneous Graph Learning (HGConv)
 [论文链接](https://arxiv.org/pdf/2012.14722)
 | [官方代码](https://github.com/yule-BUAA/HGConv)
+* supergat - How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision (SuperGAT)
+[论文链接](https://openreview.net/pdf?id=Wi5KUNlqWty)
+| [官方代码](https://github.com/dongkwan-kim/SuperGAT)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
