@@ -61,11 +61,13 @@ class SuperGATConv(nn.Module):
             if self.training:
                 # 负采样
                 neg_g = dgl.graph(
-                    self.neg_sampler(g, list(range(g.num_edges()))), num_nodes=g.num_nodes()
+                    self.neg_sampler(g, list(range(g.num_edges()))), num_nodes=g.num_nodes(),
+                    device=g.device
                 )
                 neg_e = self.attn(neg_g, feat_src, feat_src)  # (E', K, 1)
                 self.attn_x = torch.cat([e, neg_e]).squeeze(dim=-1).mean(dim=1)  # (E+E',)
-                self.attn_y = torch.cat([torch.ones(e.shape[0]), torch.zeros(neg_e.shape[0])])
+                self.attn_y = torch.cat([torch.ones(e.shape[0]), torch.zeros(neg_e.shape[0])]) \
+                    .to(self.attn_x.device)
 
             if self.activation:
                 out = self.activation(out)
@@ -103,7 +105,7 @@ class SuperGAT(nn.Module):
         )
         self.conv2 = SuperGATConv(
             num_heads * hidden_dim, out_dim, num_heads, attn_type, neg_sample_ratio,
-            feat_drop, attn_drop, negative_slope
+            0, attn_drop, negative_slope
         )
 
     def forward(self, g, feat):

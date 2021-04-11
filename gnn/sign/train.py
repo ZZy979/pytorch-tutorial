@@ -11,7 +11,7 @@ from gnn.sign.model import SIGN
 from gnn.utils import set_random_seed, accuracy
 
 
-def load_data(dataset):
+def load_data(dataset, ogb_root):
     if dataset in ('cora', 'reddit'):
         data = CoraGraphDataset() if dataset == 'cora' else RedditDataset(self_loop=True)
         g = data[0]
@@ -20,7 +20,7 @@ def load_data(dataset):
         test_idx = g.ndata['test_mask'].nonzero(as_tuple=True)[0]
         return g, g.ndata['label'], data.num_classes, train_idx, val_idx, test_idx
     else:
-        data = DglNodePropPredDataset('ogbn-products', 'D:\\ogb')
+        data = DglNodePropPredDataset('ogbn-products', ogb_root)
         g, labels = data[0]
         split_idx = data.get_idx_split()
         return g, labels.squeeze(dim=-1), data.num_classes, \
@@ -50,7 +50,7 @@ def preprocess(g, features, num_hops):
 
 def train(args):
     set_random_seed(args.seed)
-    g, labels, num_classes, train_idx, val_idx, test_idx = load_data(args.dataset)
+    g, labels, num_classes, train_idx, val_idx, test_idx = load_data(args.dataset, args.ogb_root)
     print('正在预先计算邻居聚集特征...')
     features = preprocess(g, g.ndata['feat'], args.num_hops)  # List[tensor(N, d_in)]，长度为r+1
     train_feats = [feat[train_idx] for feat in features]
@@ -93,6 +93,7 @@ def main():
     parser.add_argument(
         '--dataset', choices=['cora', 'reddit', 'amazon'], default='cora', help='dataset'
     )
+    parser.add_argument('--ogb-root', default='./ogb', help='root directory to OGB datasets')
     parser.add_argument('--num-hidden', type=int, default=256, help='number of hidden units')
     parser.add_argument('--num_hops', type=int, default=3, help='number of hops')
     parser.add_argument('--num-layers', type=int, default=2, help='number of feed-forward layers')

@@ -15,13 +15,13 @@ DATASETS = [
 ]
 
 
-def load_data(name, seed):
+def load_data(name, ogb_root, seed, device):
     if name == 'ogbn-arxiv':
-        data = DglNodePropPredDataset('ogbn-arxiv', 'D:\\ogb')
+        data = DglNodePropPredDataset('ogbn-arxiv', ogb_root)
         g, labels = data[0]
         split = data.get_idx_split()
-        return g, labels.squeeze(dim=-1), data.num_classes, \
-               split['train'], split['valid'], split['test']
+        return g.to(device), labels.squeeze(dim=-1).to(device), data.num_classes, \
+               split['train'].to(device), split['valid'].to(device), split['test'].to(device)
     elif name in ('cora', 'citeseer', 'pubmed'):
         data = load_citation_dataset(name)
     elif name == 'cora_full':
@@ -33,7 +33,7 @@ def load_data(name, seed):
     else:
         raise ValueError('Unknown dataset:', name)
 
-    g = data[0]
+    g = data[0].to(device)
     # https://github.com/dmlc/dgl/issues/2479
     num_classes = data.num_classes
     if name in ('photo', 'computers'):
@@ -44,18 +44,21 @@ def load_data(name, seed):
         test_idx = g.ndata['test_mask'].nonzero(as_tuple=True)[0]
     else:
         train_idx, val_idx, test_idx = split_idx(torch.arange(g.num_nodes()), 0.2, 0.3, seed)
-    return g, g.ndata['label'], num_classes, train_idx, val_idx, test_idx
+    return g, g.ndata['label'], num_classes, train_idx.to(device), val_idx.to(device), test_idx.to(device)
 
 
 def train(args):
     set_random_seed(args.seed)
-    g, labels, num_classes, train_idx, val_idx, test_idx = load_data(args.dataset, args.seed)
+    device = f'cuda:{args.device}' if torch.cuda.is_available() and args.device >= 0 else 'cpu'
+    device = torch.device(device)
+
+    g, labels, num_classes, train_idx, val_idx, test_idx = load_data(args.dataset, args.ogb_root, args.seed, device)
     features = g.ndata['feat']
 
     model = SuperGAT(
         features.shape[1], args.num_hidden, num_classes, args.num_heads, args.attn_type,
-        args.neg_sample_ratio, 0, args.dropout
-    )
+        args.neg_sample_ratio, args.dropout, args.dropout
+    ).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     for epoch in range(args.epochs):
         model.train()
@@ -85,7 +88,9 @@ def evaluate(model, g, features, labels, mask):
 def main():
     parser = argparse.ArgumentParser(description='SuperGAT')
     parser.add_argument('--seed', type=int, default=1, help='random seed')
+    parser.add_argument('--device', type=int, default=-1, help='GPU device')
     parser.add_argument('--dataset', choices=DATASETS, default='cora', help='dataset')
+    parser.add_argument('--ogb-root', default='./ogb', help='root directory to OGB datasets')
     parser.add_argument('--num-hidden', type=int, default=8, help='number of hidden units')
     parser.add_argument('--num-heads', type=int, default=8, help='number of attention heads')
     parser.add_argument(
