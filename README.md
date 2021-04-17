@@ -57,6 +57,10 @@
 * supergat - How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision (SuperGAT)
 [论文链接](https://openreview.net/pdf?id=Wi5KUNlqWty)
 | [官方代码](https://github.com/dongkwan-kim/SuperGAT)
+* metapath2vec - metapath2vec: Scalable Representation Learning for Heterogeneous Networks
+[论文链接](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf)
+| [官方代码](https://ericdongyx.github.io/metapath2vec/m2v.html)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/metapath2vec)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
