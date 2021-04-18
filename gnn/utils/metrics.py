@@ -30,7 +30,7 @@ def micro_macro_f1_score(logits, labels):
 def nmi_ari_score(logits, labels):
     """计算NMI和ARI得分
 
-    :param logits: tensor(N, C) 预测概率，N为样本数，C为类别数
+    :param logits: tensor(N, d) 预测概率，N为样本数
     :param labels: tensor(N) 正确标签
     :return: float, float NMI和ARI得分
     """
