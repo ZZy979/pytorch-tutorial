@@ -1,10 +1,10 @@
-import random
-
 import numpy as np
 
 from .data import *
 from .metapath import *
 from .metrics import *
+from .neg_sampler import *
+from .random_walk import metapath_random_walk
 
 
 def set_random_seed(seed):

@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from dgl.ops import edge_softmax
 
 from gnn.supergat.attention import get_graph_attention
-from gnn.supergat.neg_sampler import RatioNegativeSampler
+from gnn.utils import RatioNegativeSampler
 
 
 class SuperGATConv(nn.Module):
