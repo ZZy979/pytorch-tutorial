@@ -11,17 +11,14 @@ import torch.nn.functional as F
 
 class ContentAggregation(nn.Module):
 
-    def __init__(self, in_dim, hidden_dim, dropout=0.0):
+    def __init__(self, in_dim, hidden_dim):
         """异构内容嵌入模块，针对一种顶点类型，将该类型顶点的多个输入特征编码为一个向量
 
         :param in_dim: int 输入特征维数
         :param hidden_dim: int 内容嵌入维数
-        :param dropout: float, optional Dropout概率，默认为0
         """
         super().__init__()
-        self.lstm = nn.LSTM(
-            in_dim, hidden_dim // 2, batch_first=True, dropout=dropout, bidirectional=True
-        )
+        self.lstm = nn.LSTM(in_dim, hidden_dim // 2, batch_first=True, bidirectional=True)
 
     def forward(self, feats):
         """
@@ -34,16 +31,13 @@ class ContentAggregation(nn.Module):
 
 class NeighborAggregation(nn.Module):
 
-    def __init__(self, emb_dim, dropout=0.0):
+    def __init__(self, emb_dim):
         """邻居聚集模块，针对一种邻居类型t，将一个顶点的所有t类型邻居的内容嵌入向量聚集为一个向量
 
         :param emb_dim: int 内容嵌入维数
-        :param dropout: float, optional Dropout概率，默认为0
         """
         super().__init__()
-        self.lstm = nn.LSTM(
-            emb_dim, emb_dim // 2, batch_first=True, dropout=dropout, bidirectional=True
-        )
+        self.lstm = nn.LSTM(emb_dim, emb_dim // 2, batch_first=True, bidirectional=True)
 
     def forward(self, embeds):
         """
@@ -85,20 +79,19 @@ class TypesCombination(nn.Module):
 
 class HetGNN(nn.Module):
 
-    def __init__(self, in_dim, hidden_dim, ntypes, dropout=0.0):
+    def __init__(self, in_dim, hidden_dim, ntypes):
         """HetGNN模型
 
         :param in_dim: int 输入特征维数
         :param hidden_dim: int 隐含特征维数
         :param ntypes: List[str] 顶点类型列表
-        :param dropout: float, optional Dropout概率，默认为0
         """
         super().__init__()
         self.content_aggs = nn.ModuleDict({
-            ntype: ContentAggregation(in_dim, hidden_dim, dropout) for ntype in ntypes
+            ntype: ContentAggregation(in_dim, hidden_dim) for ntype in ntypes
         })
         self.neighbor_aggs = nn.ModuleDict({
-            ntype: NeighborAggregation(hidden_dim, dropout) for ntype in ntypes
+            ntype: NeighborAggregation(hidden_dim) for ntype in ntypes
         })
         self.combs = nn.ModuleDict({
             ntype: TypesCombination(hidden_dim) for ntype in ntypes

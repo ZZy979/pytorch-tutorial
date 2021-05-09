@@ -17,7 +17,7 @@ def train(args):
     g = load_graphs(os.path.join(args.data_path, 'neighbor_graph.bin'))[0][0]
     feats = load_info(os.path.join(args.data_path, 'in_feats.pkl'))
 
-    model = HetGNN(feats['author'].shape[-1], args.num_hidden, g.ntypes, args.dropout)
+    model = HetGNN(feats['author'].shape[-1], args.num_hidden, g.ntypes)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     neg_sampler = RatioNegativeSampler()
     for epoch in range(args.epochs):
@@ -45,7 +45,6 @@ def main():
     parser = argparse.ArgumentParser(description='HetGNN unsupervised training')
     parser.add_argument('--seed', type=int, default=10, help='random seed')
     parser.add_argument('--num-hidden', type=int, default=128, help='number of hidden units')
-    parser.add_argument('--dropout', type=float, default=0.0, help='dropout probability')
     parser.add_argument('--epochs', type=int, default=100, help='number of training epochs')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay')
