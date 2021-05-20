@@ -34,7 +34,7 @@ class HGTLayer(nn.Module):
         self.k_linears = nn.ModuleDict({ntype: nn.Linear(in_dim, out_dim) for ntype in ntypes})
         self.q_linears = nn.ModuleDict({ntype: nn.Linear(in_dim, out_dim) for ntype in ntypes})
         self.v_linears = nn.ModuleDict({ntype: nn.Linear(in_dim, out_dim) for ntype in ntypes})
-        self.a_linears = nn.ModuleDict({ntype: nn.Linear(in_dim, out_dim) for ntype in ntypes})
+        self.a_linears = nn.ModuleDict({ntype: nn.Linear(out_dim, out_dim) for ntype in ntypes})
         self.use_norm = use_norm
         if use_norm:
             self.norms = nn.ModuleDict({ntype: nn.LayerNorm(out_dim) for ntype in ntypes})
