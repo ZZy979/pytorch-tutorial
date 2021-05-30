@@ -28,13 +28,14 @@ def train(args):
 
     model = HGT(
         {ntype: g.nodes[ntype].data['feat'].shape[1] for ntype in g.ntypes},
-        args.num_hidden, data.num_classes, g.ntypes, g.etypes, args.num_heads,
-        args.num_layers, predict_ntype, args.dropout
+        args.num_hidden, data.num_classes, args.num_heads, g.ntypes, g.canonical_etypes,
+        predict_ntype, args.num_layers, args.dropout
     )
     optimizer = optim.AdamW(model.parameters())
     scheduler = optim.lr_scheduler.OneCycleLR(optimizer, args.max_lr, total_steps=args.epochs)
     metrics = 'Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f}' \
-              ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'
+              ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}' \
+              ' | Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'
     warnings.filterwarnings('ignore', 'Setting attributes on ParameterDict is not supported')
     for epoch in range(args.epochs):
         model.train()
@@ -48,15 +49,16 @@ def train(args):
 
         train_scores = micro_macro_f1_score(logits[train_mask], labels[train_mask])
         val_scores = evaluate(model, g, features, labels, val_mask, micro_macro_f1_score)
-        print(metrics.format(epoch, loss.item(), *train_scores, *val_scores))
+        test_scores = evaluate(model, g, features, labels, test_mask, micro_macro_f1_score)
+        print(metrics.format(epoch, loss.item(), *train_scores, *val_scores, *test_scores))
     test_scores = evaluate(model, g, features, labels, test_mask, micro_macro_f1_score)
     print('Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'.format(*test_scores))
 
 
+@torch.no_grad()
 def evaluate(model, g, features, labels, mask, score):
     model.eval()
-    with torch.no_grad():
-        logits = model(g, features)
+    logits = model(g, features)
     return score(logits[mask], labels[mask])
 
 

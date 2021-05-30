@@ -28,18 +28,20 @@ def train(args):
 
     model = HGConv(
         {ntype: g.nodes[ntype].data['feat'].shape[1] for ntype in g.ntypes},
-        args.num_hidden, data.num_classes, args.num_heads, g, predict_ntype,
-        args.num_layers, args.dropout, args.residual
+        args.num_hidden, data.num_classes, args.num_heads, g.ntypes, g.canonical_etypes,
+        predict_ntype, args.num_layers, args.dropout, args.residual
     )
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     score = micro_macro_f1_score if args.task == 'clf' else nmi_ari_score
     if args.task == 'clf':
         metrics = 'Epoch {:d} | Train Loss {:.4f} | Train Micro-F1 {:.4f} | Train Macro-F1 {:.4f}' \
-                  ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}'
+                  ' | Val Micro-F1 {:.4f} | Val Macro-F1 {:.4f}' \
+                  ' | Test Micro-F1 {:.4f} | Test Macro-F1 {:.4f}'
     else:
         metrics = 'Epoch {:d} | Train Loss {:.4f} | Train NMI {:.4f} | Train ARI {:.4f}' \
-                  ' | Val NMI {:.4f} | Val ARI {:.4f}'
+                  ' | Val NMI {:.4f} | Val ARI {:.4f}' \
+                  ' | Test NMI {:.4f} | Test ARI {:.4f}'
     warnings.filterwarnings('ignore', 'Setting attributes on ParameterDict is not supported')
     for epoch in range(args.epochs):
         model.train()
@@ -51,7 +53,8 @@ def train(args):
 
         train_metrics = score(logits[train_mask], labels[train_mask])
         val_metrics = evaluate(model, g, features, labels, val_mask, score)
-        print(metrics.format(epoch, loss.item(), *train_metrics, *val_metrics))
+        test_metrics = evaluate(model, g, features, labels, test_mask, score)
+        print(metrics.format(epoch, loss.item(), *train_metrics, *val_metrics, *test_metrics))
 
     test_metrics = evaluate(model, g, features, labels, test_mask, score)
     if args.task == 'clf':
@@ -60,10 +63,10 @@ def train(args):
         print('Test NMI {:.4f} | Test ARI {:.4f}'.format(*test_metrics))
 
 
+@torch.no_grad()
 def evaluate(model, g, features, labels, mask, score):
     model.eval()
-    with torch.no_grad():
-        logits = model(g, features)
+    logits = model(g, features)
     return score(logits[mask], labels[mask])
 
 
