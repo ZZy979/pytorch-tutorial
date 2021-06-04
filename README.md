@@ -68,6 +68,9 @@
 [论文链接](https://ericdongyx.github.io/papers/KDD17-dong-chawla-swami-metapath2vec.pdf)
 | [官方代码](https://ericdongyx.github.io/metapath2vec/m2v.html)
 | [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/metapath2vec)
+* rhgnn - Heterogeneous Graph Representation Learning with Relation Awareness (R-HGNN)
+[论文链接](https://arxiv.org/pdf/2105.11122)
+| [官方代码](https://github.com/yule-BUAA/R-HGNN/)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)

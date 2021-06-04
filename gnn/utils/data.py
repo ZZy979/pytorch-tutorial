@@ -1,4 +1,6 @@
+import dgl
 from dgl.data import citation_graph, rdf, knowledge_graph
+from dgl.utils import extract_node_subframes, set_new_frames
 from sklearn.model_selection import train_test_split
 
 
@@ -57,3 +59,20 @@ def split_idx(samples, train_size, val_size, random_state=None):
         val_size *= len(samples) / len(val)
     val, test = train_test_split(val, train_size=val_size, random_state=random_state)
     return train, val, test
+
+
+def add_reverse_edges(g):
+    """给异构图的每种边添加反向边，返回新的异构图
+
+    :param g: DGLGraph 异构图
+    :return: DGLGraph 添加反向边之后的异构图
+    """
+    data = {}
+    for stype, etype, dtype in g.canonical_etypes:
+        u, v = g.edges(etype=(stype, etype, dtype))
+        data[(stype, etype, dtype)] = u, v
+        data[(dtype, etype + '_rev', stype)] = v, u
+    new_g = dgl.heterograph(data, {ntype: g.num_nodes(ntype) for ntype in g.ntypes})
+    node_frames = extract_node_subframes(g, None)
+    set_new_frames(new_g, node_frames=node_frames)
+    return new_g
