@@ -71,6 +71,9 @@
 * rhgnn - Heterogeneous Graph Representation Learning with Relation Awareness (R-HGNN)
 [论文链接](https://arxiv.org/pdf/2105.11122)
 | [官方代码](https://github.com/yule-BUAA/R-HGNN/)
+* lp - Label Propagation
+[论文链接](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.3864&rep=rep1&type=pdf)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/label_propagation)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
