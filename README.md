@@ -74,6 +74,10 @@
 * lp - Label Propagation
 [论文链接](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.3864&rep=rep1&type=pdf)
 | [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/label_propagation)
+* cs - Correct and Smooth (C&S)
+[论文链接](https://arxiv.org/pdf/2010.13993)
+| [官方代码](https://github.com/CUAI/CorrectAndSmooth)
+| [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/correct_and_smooth)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
