@@ -1,8 +1,4 @@
 # PyTorch示例代码
-## 运行方式
-使用Python的`-m`参数
-
-例如：要运行gnn/gcn/train.py则执行 `python -m gnn.gcn.train`
 
 ## beginner - [PyTorch官方教程](https://pytorch.org/tutorials/)
 * two_layer_net.py - [两层全连接网络](https://github.com/pytorch/tutorials/blob/09460601a9f914511d87c12c4e0b04dc21df3086/beginner_source/pytorch_with_examples.rst)
@@ -19,6 +15,10 @@
 * lstm.py - [LSTM](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_lstm_neuralnetwork/)
 
 ## gnn - 图神经网络
+运行方式：使用Python的`-m`参数
+
+例如：要运行gnn/gcn/train.py则执行`python -m gnn.gcn.train`
+
 ### dgl - [DGL官方文档示例](https://docs.dgl.ai/)
 * dgl_first_demo.py - [DGL at a Glance](https://docs.dgl.ai/tutorials/basics/1_first.html)
 * node_clf.py, node_clf_hetero.py - [顶点分类/回归](https://docs.dgl.ai/guide/training-node.html)
@@ -78,6 +78,9 @@
 [论文链接](https://arxiv.org/pdf/2010.13993)
 | [官方代码](https://github.com/CUAI/CorrectAndSmooth)
 | [DGL实现](https://github.com/dmlc/dgl/tree/master/examples/pytorch/correct_and_smooth)
+* heco - Self-Supervised Heterogeneous Graph Neural Network with Co-Contrastive Learning (HeCo)
+[论文链接](https://arxiv.org/pdf/2105.09111)
+| [官方代码](https://github.com/liun-online/HeCo)
 
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
