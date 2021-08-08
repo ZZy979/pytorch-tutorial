@@ -102,7 +102,7 @@ class NetworkSchemaEncoder(nn.Module):
 
         :param hidden_dim: int 隐含特征维数
         :param attn_drop: float 注意力dropout
-        :param neighbor_sizes: List[int] 各邻居类型到采样个数，长度为邻居类型数S
+        :param neighbor_sizes: List[int] 各邻居类型的采样个数，长度为邻居类型数S
         """
         super().__init__()
         self.gats = nn.ModuleList([

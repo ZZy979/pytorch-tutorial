@@ -15,6 +15,8 @@
 * lstm.py - [LSTM](https://www.deeplearningwizard.com/deep_learning/practical_pytorch/pytorch_lstm_neuralnetwork/)
 
 ## gnn - 图神经网络
+复现的GNN模型全部使用DGL实现，部分模型参考了[DGL官方示例](https://github.com/dmlc/dgl/tree/master/examples)
+
 运行方式：使用Python的`-m`参数
 
 例如：要运行gnn/gcn/train.py则执行`python -m gnn.gcn.train`

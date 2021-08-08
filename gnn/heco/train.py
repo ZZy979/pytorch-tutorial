@@ -169,7 +169,7 @@ def main():
     parser.add_argument('--attn-drop', type=float, default=0.5, help='attention dropout')
     parser.add_argument('--tau', type=float, default=0.8, help='temperature parameter')
     parser.add_argument(
-        '--lambda', type=float, default='0.5', dest='lambda_',
+        '--lambda', type=float, default=0.5, dest='lambda_',
         help='balance coefficient of contrastive loss'
     )
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
