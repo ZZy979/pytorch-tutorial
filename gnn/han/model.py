@@ -1,8 +1,6 @@
 """Heterogeneous Graph Attention Network (HAN)
 
-* 论文链接：https://arxiv.org/abs/1903.07293
-* 官方代码：https://github.com/Jhy1993/HAN
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/han
+论文链接：https://arxiv.org/abs/1903.07293
 """
 import torch
 import torch.nn as nn

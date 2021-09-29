@@ -1,7 +1,6 @@
 """Heterogeneous Graph Neural Network (HetGNN)
 
-* 论文链接：https://dl.acm.org/doi/pdf/10.1145/3292500.3330961
-* 官方代码：https://github.com/chuxuzhang/KDD2019_HetGNN
+论文链接：https://dl.acm.org/doi/pdf/10.1145/3292500.3330961
 """
 import dgl.function as fn
 import torch

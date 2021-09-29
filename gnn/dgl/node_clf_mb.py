@@ -29,7 +29,7 @@ class GCN(nn.Module):
 def main():
     data = CiteseerGraphDataset()
     g = data[0]
-    train_idx = g.ndata['train_mask'].nonzero(as_tuple=False)
+    train_idx = g.ndata['train_mask'].nonzero(as_tuple=True)[0]
 
     sampler = MultiLayerFullNeighborSampler(2)
     collator = NodeCollator(g, train_idx, sampler)

@@ -1,9 +1,6 @@
 """训练用于顶点分类/回归任务的GNN
 
-参考：
-
-* <https://docs.dgl.ai/guide/training-node.html>
-* <https://github.com/dmlc/dgl/blob/master/examples/pytorch/graphsage/train_full.py>
+https://docs.dgl.ai/en/latest/guide/training-node.html
 """
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,7 +1,6 @@
 """Heterogeneous Graph Representation Learning with Relation Awareness (R-HGNN)
 
-* 论文链接：https://arxiv.org/pdf/2105.11122
-* 官方代码：https://github.com/yule-BUAA/R-HGNN/
+论文链接：https://arxiv.org/pdf/2105.11122
 """
 import dgl.function as fn
 import torch

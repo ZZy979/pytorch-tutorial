@@ -58,7 +58,7 @@ class HeCoDataset(DGLDataset):
         for ntype, feat in feats.items():
             self.g.nodes[ntype].data['feat'] = feat
 
-        labels = torch.from_numpy(np.load(os.path.join(self.raw_path, 'labels.npy')).astype('int'))
+        labels = torch.from_numpy(np.load(os.path.join(self.raw_path, 'labels.npy'))).long()
         self._num_classes = labels.max().item() + 1
         self.g.nodes[self.predict_ntype].data['label'] = labels
 

@@ -1,7 +1,6 @@
 """How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision (SuperGAT)
 
-* 论文链接：https://openreview.net/pdf?id=Wi5KUNlqWty
-* 官方代码：https://github.com/dongkwan-kim/SuperGAT
+论文链接：https://openreview.net/pdf?id=Wi5KUNlqWty
 """
 import dgl
 import dgl.function as fn

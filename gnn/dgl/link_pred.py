@@ -1,6 +1,6 @@
 """训练用于连接预测任务的GNN
 
-参考：<https://docs.dgl.ai/guide/training-link.html>
+https://docs.dgl.ai/en/latest/guide/training-link.html
 """
 import dgl
 import numpy as np

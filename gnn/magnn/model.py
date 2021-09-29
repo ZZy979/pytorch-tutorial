@@ -1,7 +1,6 @@
 """Metapath Aggregated Graph Neural Network (MAGNN)
 
-* 论文链接：https://arxiv.org/pdf/2002.01680
-* 官方代码：https://github.com/cynricfu/MAGNN
+论文链接：https://arxiv.org/pdf/2002.01680
 """
 import dgl
 import dgl.function as fn

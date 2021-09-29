@@ -1,4 +1,4 @@
-"""参考：<https://docs.dgl.ai/tutorials/basics/1_first.html>"""
+"""https://docs.dgl.ai/en/0.5.x/tutorials/basics/1_first.html"""
 import itertools
 
 import dgl

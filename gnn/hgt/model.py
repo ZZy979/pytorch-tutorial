@@ -1,8 +1,6 @@
 """Heterogeneous Graph Transformer (HGT)
 
-* 论文链接：https://arxiv.org/pdf/2003.01332
-* 官方代码：https://github.com/acbull/pyHGT
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/hgt
+论文链接：https://arxiv.org/pdf/2003.01332
 """
 import math
 

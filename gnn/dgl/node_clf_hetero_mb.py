@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from dgl.dataloading import MultiLayerFullNeighborSampler, NodeCollator, DataLoader
+from dgl.dataloading import MultiLayerFullNeighborSampler, NodeDataLoader
 from dgl.nn import HeteroGraphConv, GraphConv
 
 from gnn.dgl.node_clf_hetero import build_user_item_graph
@@ -32,11 +32,10 @@ class RGCN(nn.Module):
 
 def main():
     g = build_user_item_graph()
-    train_idx = g.nodes['user'].data['train_mask'].nonzero(as_tuple=False)
+    train_idx = g.nodes['user'].data['train_mask'].nonzero(as_tuple=True)[0]
 
     sampler = MultiLayerFullNeighborSampler(2)
-    collator = NodeCollator(g, {'user': train_idx}, sampler)
-    dataloader = DataLoader(collator.dataset, 32, collate_fn=collator.collate)
+    dataloader = NodeDataLoader(g, {'user': train_idx}, sampler, batch_size=32)
 
     model = RGCN(10, 20, 5, g.etypes)
     opt = optim.Adam(model.parameters())

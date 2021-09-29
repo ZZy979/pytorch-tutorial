@@ -1,6 +1,6 @@
 """在异构图上训练用于边分类/回归任务的GNN
 
-参考：<https://docs.dgl.ai/guide/training-edge.html>
+https://docs.dgl.ai/en/latest/guide/training-edge.html
 """
 import dgl.function as fn
 import torch

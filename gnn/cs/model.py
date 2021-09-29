@@ -1,8 +1,6 @@
 """Correct and Smooth (C&S)
 
-* 论文链接：https://arxiv.org/pdf/2010.13993
-* 官方代码：https://github.com/CUAI/CorrectAndSmooth
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/correct_and_smooth
+论文链接：https://arxiv.org/pdf/2010.13993
 """
 import dgl.function as fn
 import torch

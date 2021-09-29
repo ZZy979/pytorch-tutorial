@@ -1,6 +1,6 @@
 """训练用于图分类任务的GNN
 
-参考：<https://docs.dgl.ai/guide/training-graph.html>
+https://docs.dgl.ai/en/latest/guide/training-graph.html
 """
 import dgl
 import torch

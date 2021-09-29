@@ -1,7 +1,6 @@
 """Hybrid Micro/Macro Level Convolution for Heterogeneous Graph Learning (HGConv)
 
-* 论文链接：https://arxiv.org/pdf/2012.14722
-* 官方代码：https://github.com/yule-BUAA/HGConv
+论文链接：https://arxiv.org/pdf/2012.14722
 """
 import dgl.function as fn
 import torch

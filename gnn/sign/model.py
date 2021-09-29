@@ -1,7 +1,6 @@
 """SIGN: Scalable Inception Graph Neural Networks (SIGN)
 
-* 论文链接：https://arxiv.org/pdf/2004.11198
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/sign
+论文链接：https://arxiv.org/pdf/2004.11198
 """
 import torch
 import torch.nn as nn

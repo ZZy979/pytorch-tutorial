@@ -1,8 +1,6 @@
 """Graph Convolutional Network (GCN)
 
-* 论文链接：https://arxiv.org/abs/1609.02907
-* DGL教程：https://docs.dgl.ai/tutorials/models/1_gnn/1_gcn.html
-* DGL实现：https://github.com/dmlc/dgl/blob/master/examples/pytorch/gcn
+论文链接：https://arxiv.org/abs/1609.02907
 """
 import torch.nn as nn
 import torch.nn.functional as F

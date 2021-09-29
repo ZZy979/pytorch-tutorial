@@ -1,4 +1,4 @@
-dgl>=0.5.3
+dgl>=0.7.0
 gensim>=3.8.3
 matplotlib>=3.3.1
 networkx>=2.5

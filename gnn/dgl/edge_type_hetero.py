@@ -1,6 +1,6 @@
 """在异构图上训练用于预测边类型任务的GNN
 
-参考：<https://docs.dgl.ai/guide/training-edge.html>
+https://docs.dgl.ai/en/latest/guide/training-edge.html
 """
 import dgl
 import torch

@@ -1,8 +1,6 @@
 """Graph Attention Networks (GAT)
 
-* 论文链接：https://arxiv.org/abs/1710.10903
-* DGL教程：https://docs.dgl.ai/tutorials/models/1_gnn/9_gat.html
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/gat
+论文链接：https://arxiv.org/abs/1710.10903
 """
 import torch.nn as nn
 import torch.nn.functional as F

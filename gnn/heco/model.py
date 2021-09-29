@@ -1,7 +1,6 @@
 """Self-Supervised Heterogeneous Graph Neural Network with Co-Contrastive Learning (HeCo)
 
-* 论文链接：https://arxiv.org/pdf/2105.09111
-* 官方代码：https://github.com/liun-online/HeCo
+论文链接：https://arxiv.org/pdf/2105.09111
 """
 import dgl.function as fn
 import torch

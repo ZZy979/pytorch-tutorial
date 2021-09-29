@@ -1,7 +1,6 @@
 """Label Propagation
 
-* 论文链接：https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.3864&rep=rep1&type=pdf
-* DGL实现：https://github.com/dmlc/dgl/tree/master/examples/pytorch/label_propagation
+论文链接：https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.14.3864&rep=rep1&type=pdf
 """
 import dgl.function as fn
 import torch

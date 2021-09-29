@@ -41,13 +41,14 @@ def train(args):
     g, labels, num_classes, train_idx, val_idx, test_idx, evaluator = \
         load_data(args.ogb_path, device)
     load_pretrained_node_embed(g, args.node_embed_path)
+    g = g.to(device)
 
     sampler = MultiLayerNeighborSampler(
         list(range(args.neighbor_size, args.neighbor_size + args.num_layers))
     )
-    train_loader = NodeDataLoader(g, {'paper': train_idx}, sampler, batch_size=args.batch_size)
-    val_loader = NodeDataLoader(g, {'paper': val_idx}, sampler, batch_size=args.batch_size)
-    test_loader = NodeDataLoader(g, {'paper': test_idx}, sampler, batch_size=args.batch_size)
+    train_loader = NodeDataLoader(g, {'paper': train_idx}, sampler, device=device, batch_size=args.batch_size)
+    val_loader = NodeDataLoader(g, {'paper': val_idx}, sampler, device=device, batch_size=args.batch_size)
+    test_loader = NodeDataLoader(g, {'paper': test_idx}, sampler, device=device, batch_size=args.batch_size)
 
     model = RHGNN(
         {ntype: g.nodes[ntype].data['feat'].shape[1] for ntype in g.ntypes},
@@ -63,7 +64,6 @@ def train(args):
         model.train()
         logits, train_labels, losses = [], [], []
         for input_nodes, output_nodes, blocks in tqdm(train_loader):
-            blocks = [b.to(device) for b in blocks]
             batch_labels = labels[output_nodes['paper']]
             batch_logits = model(blocks, blocks[0].srcdata['feat'])
             loss = F.cross_entropy(batch_logits, batch_labels.squeeze(dim=1))
@@ -101,7 +101,6 @@ def evaluate(loader, device, model, labels, evaluator):
     model.eval()
     logits, eval_labels = [], []
     for input_nodes, output_nodes, blocks in loader:
-        blocks = [b.to(device) for b in blocks]
         batch_labels = labels[output_nodes['paper']]
         batch_logits = model(blocks, blocks[0].srcdata['feat'])
 
@@ -125,7 +124,7 @@ def main():
         '--no-residual', action='store_false', help='no residual connection', dest='residual'
     )
     parser.add_argument('--epochs', type=int, default=200, help='number of training epochs')
-    parser.add_argument('--batch-size', type=int, default=4096, help='batch size')
+    parser.add_argument('--batch-size', type=int, default=1024, help='batch size')
     parser.add_argument('--neighbor-size', type=int, default=10, help='number of sampled neighbors')
     parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
     parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay')
