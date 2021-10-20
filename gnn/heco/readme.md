@@ -2,8 +2,8 @@
 `python -m gnn.heco.train --dataset=acm`
 
 ```
-Micro-F1 0.8830 | Macro-F1 0.8842 | AUC 0.9708
-NMI 0.6078 | ARI 0.6334
+Micro-F1 0.8830 | Macro-F1 0.8850 | AUC 0.9700
+NMI 0.5954 | ARI 0.6138
 ```
 
 作者代码结果：
@@ -19,8 +19,8 @@ NMI 0.5634 | ARI 0.5347
 `python -m gnn.heco.train --dataset=dblp --feat-drop=0.4 --attn-drop=0.35 --tau=0.9`
 
 ```
-Micro-F1 0.9110 | Macro-F1 0.9068 | AUC 0.9828
-NMI 0.6756 | ARI 0.7008
+Micro-F1 0.9070 | Macro-F1 0.9032 | AUC 0.9827
+NMI 0.6784 | ARI 0.7030
 ```
 
 作者代码结果：
@@ -36,8 +36,8 @@ NMI 0.7086 | ARI 0.7645
 `python -m gnn.heco.train --dataset=freebase --feat-drop=0.1 --attn-drop=0.3 --tau=0.5 --lr=0.001`
 
 ```
-Micro-F1 0.5630 | Macro-F1 0.5438 | AUC 0.7234
-NMI 0.1803 | ARI 0.2070
+Micro-F1 0.5600 | Macro-F1 0.5404 | AUC 0.7307
+NMI 0.1773 | ARI 0.2003
 ```
 
 作者代码结果：
@@ -53,8 +53,8 @@ NMI 0.1850 | ARI 0.2121
 `python -m gnn.heco.train --dataset=aminer --feat-drop=0.5 --attn-drop=0.5 --tau=0.5 --lr=0.003`
 
 ```
-Micro-F1 0.6890 | Macro-F1 0.6436 | AUC 0.8788
-NMI 0.2860 | ARI 0.2790
+Micro-F1 0.7350 | Macro-F1 0.6519 | AUC 0.8800
+NMI 0.3110 | ARI 0.2773
 ```
 
 作者代码结果：

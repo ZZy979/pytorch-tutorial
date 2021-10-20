@@ -8,7 +8,8 @@ import pandas as pd
 import scipy.sparse as sp
 import torch
 from dgl.data import DGLDataset
-from dgl.data.utils import download, save_graphs, load_graphs, generate_mask_tensor, idx2mask
+from dgl.data.utils import download, save_graphs, save_info, load_graphs, load_info, \
+    generate_mask_tensor, idx2mask
 
 
 class HeCoDataset(DGLDataset):
@@ -16,8 +17,15 @@ class HeCoDataset(DGLDataset):
 
     论文链接：https://arxiv.org/pdf/2105.09111
 
-    实现类：
+    类属性
+    -----
+    * num_classes: 类别数
+    * metapaths: 使用的元路径
+    * predict_ntype: 目标顶点类型
+    * pos: (tensor(E_pos), tensor(E_pos)) 目标顶点正样本对，pos[1][i]是pos[0][i]的正样本
 
+    实现类
+    -----
     * ACMHeCoDataset
     * DBLPHeCoDataset
     * FreebaseHeCoDataset
@@ -42,6 +50,7 @@ class HeCoDataset(DGLDataset):
 
     def save(self):
         save_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'), [self.g])
+        save_info(os.path.join(self.raw_path, self.name + '_pos.pkl'), {'pos_i': self.pos_i, 'pos_j': self.pos_j})
 
     def load(self):
         graphs, _ = load_graphs(os.path.join(self.save_path, self.name + '_dgl_graph.bin'))
@@ -50,6 +59,8 @@ class HeCoDataset(DGLDataset):
         self._num_classes = self.g.nodes[ntype].data['label'].max().item() + 1
         for k in ('train_mask', 'val_mask', 'test_mask'):
             self.g.nodes[ntype].data[k] = self.g.nodes[ntype].data[k].bool()
+        info = load_info(os.path.join(self.raw_path, self.name + '_pos.pkl'))
+        self.pos_i, self.pos_j = info['pos_i'], info['pos_j']
 
     def process(self):
         self.g = dgl.heterograph(self._read_edges())
@@ -67,6 +78,9 @@ class HeCoDataset(DGLDataset):
             idx = np.load(os.path.join(self.raw_path, f'{split}_20.npy'))
             mask = generate_mask_tensor(idx2mask(idx, n))
             self.g.nodes[self.predict_ntype].data[f'{split}_mask'] = mask
+
+        pos_i, pos_j = sp.load_npz(os.path.join(self.raw_path, 'pos.npz')).nonzero()
+        self.pos_i, self.pos_j = torch.from_numpy(pos_i).long(), torch.from_numpy(pos_j).long()
 
     def _read_edges(self):
         edges = {}
@@ -112,29 +126,27 @@ class HeCoDataset(DGLDataset):
     def predict_ntype(self):
         raise NotImplementedError
 
+    @property
+    def pos(self):
+        return self.pos_i, self.pos_j
+
 
 class ACMHeCoDataset(HeCoDataset):
     """HeCo模型使用的ACM数据集
 
     统计数据
     -----
-    * 顶点：4019 paper, 7167 author, 60 field
-    * 边：13407 paper-author, 4019 paper-field
+    * 顶点：4019 paper, 7167 author, 60 subject
+    * 边：13407 paper-author, 4019 paper-subject
     * 目标顶点类型：paper
     * 类别数：3
     * 顶点划分：60 train, 1000 valid, 1000 test
 
-    类属性
-    -----
-    * num_classes: 类别数
-    * metapaths: 使用的元路径
-    * predict_ntype: 目标顶点类型
-
     paper顶点特征
     -----
-    * feat: tensor(4019, 1902)
-    * label: tensor(4019) 0~2
-    * train_mask, val_mask, test_mask: tensor(4019)
+    * feat: tensor(N_paper, 1902)
+    * label: tensor(N_paper) 0~2
+    * train_mask, val_mask, test_mask: tensor(N_paper)
 
     author顶点特征
     -----
@@ -164,17 +176,11 @@ class DBLPHeCoDataset(HeCoDataset):
     * 类别数：4
     * 顶点划分：80 train, 1000 valid, 1000 test
 
-    类属性
-    -----
-    * num_classes: 类别数
-    * metapaths: 使用的元路径
-    * predict_ntype: 目标顶点类型
-
     author顶点特征
     -----
-    * feat: tensor(4057, 334)
-    * label: tensor(4057) 0~3
-    * train_mask, val_mask, test_mask: tensor(4057)
+    * feat: tensor(N_author, 334)
+    * label: tensor(N_author) 0~3
+    * train_mask, val_mask, test_mask: tensor(N_author)
 
     paper顶点特征
     -----
@@ -216,16 +222,10 @@ class FreebaseHeCoDataset(HeCoDataset):
     * 类别数：3
     * 顶点划分：60 train, 1000 valid, 1000 test
 
-    类属性
-    -----
-    * num_classes: 类别数
-    * metapaths: 使用的元路径
-    * predict_ntype: 目标顶点类型
-
     movie顶点特征
     -----
-    * label: tensor(3492) 0~2
-    * train_mask, val_mask, test_mask: tensor(3492)
+    * label: tensor(N_movie) 0~2
+    * train_mask, val_mask, test_mask: tensor(N_movie)
     """
 
     def __init__(self):
@@ -251,16 +251,10 @@ class AMinerHeCoDataset(HeCoDataset):
     * 类别数：4
     * 顶点划分：80 train, 1000 valid, 1000 test
 
-    类属性
-    -----
-    * num_classes: 类别数
-    * metapaths: 使用的元路径
-    * predict_ntype: 目标顶点类型
-
     movie顶点特征
     -----
-    * label: tensor(6564) 0~3
-    * train_mask, val_mask, test_mask: tensor(6564)
+    * label: tensor(N_paper) 0~3
+    * train_mask, val_mask, test_mask: tensor(N_paper)
     """
 
     def __init__(self):

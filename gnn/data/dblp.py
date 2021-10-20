@@ -198,7 +198,7 @@ class DBLPFourAreaDataset(DGLDataset):
 
 
 class DBLP4057Dataset(DGLDataset):
-    """HAN作者处理的ACM数据集：https://github.com/Jhy1993/HAN#datasets
+    """HAN作者处理的DBLP数据集：https://github.com/Jhy1993/HAN#datasets
 
     只有一个样本，包括author顶点基于APA, APCPA和APTPA三个元路径的邻居组成的同构图
 

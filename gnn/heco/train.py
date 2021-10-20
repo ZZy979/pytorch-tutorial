@@ -2,7 +2,6 @@ import argparse
 import random
 
 import dgl
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -50,6 +49,10 @@ def load_data(name, device):
     relations = dataset['relations']  # 网络结构视图编码器考虑的邻居类型
     neighbor_sizes = dataset['neighbor_sizes']
     pos_threshold = dataset['pos_threshold']
+
+    pos = torch.zeros((g.num_nodes(predict_ntype), g.num_nodes(predict_ntype)), dtype=torch.int, device=device)
+    pos[data.pos] = 1
+
     for ntype in g.ntypes:
         if ntype != predict_ntype or 'feat' not in g.nodes[ntype].data:
             g.nodes[ntype].data['feat'] = torch.eye(g.num_nodes(ntype))
@@ -59,48 +62,24 @@ def load_data(name, device):
     train_mask = g.nodes[predict_ntype].data['train_mask']
     val_mask = g.nodes[predict_ntype].data['val_mask']
     test_mask = g.nodes[predict_ntype].data['test_mask']
-    return g, feats, labels, data.num_classes, predict_ntype, relations, neighbor_sizes, \
-        data.metapaths, pos_threshold, train_mask, val_mask, test_mask
-
-
-def calc_pos_samples(mgs, pos_threshold):
-    count = 0
-    for mg in mgs:
-        a = mg.adj().to_dense()
-        count += a / a.sum(dim=1, keepdim=True)
-    n = count.shape[0]
-    # pos = torch.zeros(n, n, dtype=torch.bool)
-    # _, idx = torch.topk(count, pos_threshold, dim=1)
-    # for i in range(n):
-    #     pos[i, idx[i]] = True
-    # pos &= count > 0
-    count = count.numpy()
-    pos = np.zeros((n, n))
-    for i in range(n):
-        one = count[i].nonzero()[0]
-        if len(one) > pos_threshold:
-            sele = one[np.argsort(-count[i, one])[:pos_threshold]]
-            pos[i, sele] = 1
-        else:
-            pos[i, one] = 1
-    return torch.from_numpy(pos)
+    return data, g, feats, labels, predict_ntype, relations, neighbor_sizes, \
+        pos, pos_threshold, train_mask, val_mask, test_mask
 
 
 def train(args):
     set_random_seed(args.seed)
     device = get_device(args.device)
-    g, feats, labels, num_classes, predict_ntype, relations, neighbor_sizes, \
-        metapaths, pos_threshold, train_mask, val_mask, test_mask = load_data(args.dataset, device)
+    data, g, feats, labels, predict_ntype, relations, neighbor_sizes, \
+        pos, pos_threshold, train_mask, val_mask, test_mask = load_data(args.dataset, device)
     bgs = [g[rel] for rel in relations]  # 邻居-目标顶点二分图
     mgs = [
         dgl.add_self_loop(dgl.remove_self_loop(dgl.metapath_reachable_graph(g, mp))).to(device)
-        for mp in metapaths
+        for mp in data.metapaths
     ]  # 基于元路径的邻居同构图
-    pos = calc_pos_samples(mgs, pos_threshold).to(device)
 
     model = HeCo(
         [feat.shape[1] for feat in feats], args.num_hidden, args.feat_drop, args.attn_drop,
-        neighbor_sizes, len(metapaths), args.tau, args.lambda_
+        neighbor_sizes, len(data.metapaths), args.tau, args.lambda_
     ).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     for epoch in range(args.epochs):
@@ -110,7 +89,7 @@ def train(args):
         loss.backward()
         optimizer.step()
         print('Epoch {:d} | Train Loss {:.4f}'.format(epoch, loss.item()))
-    evaluate(model, mgs, feats[0], labels, num_classes, train_mask, test_mask, args.seed)
+    evaluate(model, mgs, feats[0], labels, data.num_classes, train_mask, test_mask, args.seed)
 
 
 def evaluate(model, mgs, feat, labels, num_classes, train_mask, test_mask, seed):
