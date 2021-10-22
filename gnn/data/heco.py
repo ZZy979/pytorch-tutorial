@@ -33,7 +33,7 @@ class HeCoDataset(DGLDataset):
     """
 
     def __init__(self, name, ntypes):
-        url = 'https://codeload.github.com/liun-online/HeCo/zip/refs/heads/main'
+        url = 'https://api.github.com/repos/liun-online/HeCo/zipball/main'
         self._ntypes = {ntype[0]: ntype for ntype in ntypes}
         super().__init__(name + '-heco', url)
 
