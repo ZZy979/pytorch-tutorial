@@ -22,12 +22,17 @@
 例如：要运行gnn/gcn/train.py则执行`python -m gnn.gcn.train`
 
 ### dgl - [DGL官方文档示例](https://docs.dgl.ai/)
+[训练GNN模型](https://docs.dgl.ai/en/latest/guide/training.html)
 * dgl_first_demo.py - [DGL at a Glance](https://docs.dgl.ai/en/0.5.x/tutorials/basics/1_first.html)
 * node_clf.py, node_clf_hetero.py - [顶点分类/回归](https://docs.dgl.ai/en/latest/guide/training-node.html)
 * edge_clf.py, edge_clf_hetero.py, edge_type_hetero.py - [边分类/回归](https://docs.dgl.ai/en/latest/guide/training-edge.html)
 * link_pred.py, link_pred_hetero.py - [连接预测](https://docs.dgl.ai/en/latest/guide/training-link.html)
 * graph_clf.py, graph_clf_hetero.py - [图分类](https://docs.dgl.ai/en/latest/guide/training-graph.html)
+
+[大图上的随机训练](https://docs.dgl.ai/en/latest/guide/minibatch.html)
 * node_clf_mb.py, node_clf_hetero_mb.py - [使用邻居采样的顶点分类](https://docs.dgl.ai/en/latest/guide/minibatch-node.html)
+* node_clf_mb.py, edge_clf_hetero_mb.py - [使用邻居采样的边分类](https://docs.dgl.ai/en/latest/guide/minibatch-edge.html)
+* link_pred_mb.py, link_pred_hetero_mb.py - [使用邻居采样的连接预测](https://docs.dgl.ai/en/latest/guide/minibatch-link.html)
 
 ### GNN模型
 * gcn - Graph Convolutional Network (GCN)

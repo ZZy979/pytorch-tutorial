@@ -8,7 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.data import UserItemDataset
+from gnn.dgl.node_clf_hetero import RGCN
 
 
 class HeteroMLPPredictor(nn.Module):
@@ -18,7 +19,7 @@ class HeteroMLPPredictor(nn.Module):
         self.W = nn.Linear(in_features * 2, out_classes)
 
     def apply_edges(self, edges):
-        score = self.W(torch.cat([edges.src['h'], edges.dst['h']], 1))
+        score = self.W(torch.cat([edges.src['h'], edges.dst['h']], dim=1))
         return {'score': score}
 
     def forward(self, graph, h):
@@ -42,19 +43,18 @@ class Model(nn.Module):
 
 
 def main():
-    g = build_user_item_graph()
-    user_feats = g.nodes['user'].data['feature']
-    item_feats = g.nodes['item'].data['feature']
-    node_features = {'user': user_feats, 'item': item_feats}
+    data = UserItemDataset()
+    g = data[0]
+    in_feats = g.nodes['user'].data['feat'].shape[1]
     dec_graph = g['user', :, 'item']
     edge_label = dec_graph.edata[dgl.ETYPE]
     edge_label -= edge_label.min().item()
 
-    model = Model(user_feats.shape[1], 20, 5, 2, g.etypes)
+    model = Model(in_feats, 20, 5, 2, g.etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):
-        logits = model(g, node_features, dec_graph)
+        logits = model(g, g.ndata['feat'], dec_graph)
         loss = F.cross_entropy(logits, edge_label)
         opt.zero_grad()
         loss.backward()

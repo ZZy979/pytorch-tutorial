@@ -1,15 +1,14 @@
 """使用邻居采样的顶点分类GNN
 
-https://docs.dgl.ai/guide/minibatch-node.html
+https://docs.dgl.ai/en/latest/guide/minibatch-node.html
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.data import CiteseerGraphDataset
-from dgl.dataloading import NodeCollator, MultiLayerFullNeighborSampler
+from dgl.dataloading import MultiLayerFullNeighborSampler, NodeDataLoader
 from dgl.nn import GraphConv
-from torch.utils.data.dataloader import DataLoader
 
 
 class GCN(nn.Module):
@@ -32,8 +31,7 @@ def main():
     train_idx = g.ndata['train_mask'].nonzero(as_tuple=True)[0]
 
     sampler = MultiLayerFullNeighborSampler(2)
-    collator = NodeCollator(g, train_idx, sampler)
-    dataloader = DataLoader(collator.dataset, 32, collate_fn=collator.collate)
+    dataloader = NodeDataLoader(g, train_idx, sampler, batch_size=32)
 
     model = GCN(g.ndata['feat'].shape[1], 100, data.num_classes)
     optimizer = optim.Adam(model.parameters())

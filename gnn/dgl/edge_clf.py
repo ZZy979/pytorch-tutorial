@@ -2,14 +2,13 @@
 
 https://docs.dgl.ai/en/latest/guide/training-edge.html
 """
-import dgl
 import dgl.function as fn
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+from gnn.data import RandomGraphDataset
 from gnn.dgl.node_clf import SAGE
 
 
@@ -30,9 +29,7 @@ class MLPPredictor(nn.Module):
         self.W = nn.Linear(in_features * 2, out_classes)
 
     def apply_edges(self, edges):
-        h_u = edges.src['h']
-        h_v = edges.dst['h']
-        score = self.W(torch.cat([h_u, h_v], 1))
+        score = self.W(torch.cat([edges.src['h'], edges.dst['h']], dim=1))
         return {'score': score}
 
     def forward(self, graph, h):
@@ -56,25 +53,20 @@ class Model(nn.Module):
 
 
 def main():
-    src = np.random.randint(0, 100, 500)
-    dst = np.random.randint(0, 100, 500)
-    # make it symmetric
-    g = dgl.graph((np.concatenate([src, dst]), np.concatenate([dst, src])))
-    # synthetic node and edge features, as well as edge labels
-    g.ndata['feature'] = torch.randn(100, 10)
-    g.edata['feature'] = torch.randn(1000, 10)
+    data = RandomGraphDataset(100, 500, 10)
+    g = data[0]
+    # synthetic edge labels
     g.edata['label'] = torch.randn(1000)
     # synthetic train-validation-test splits
     g.edata['train_mask'] = torch.zeros(1000, dtype=torch.bool).bernoulli(0.6)
 
-    node_features = g.ndata['feature']
     edge_label = g.edata['label']
     train_mask = g.edata['train_mask']
     model = Model(10, 20, 5)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(30):
-        pred = model(g, node_features)
+        pred = model(g, g.ndata['feat'])
         loss = F.mse_loss(pred[train_mask][:, 0], edge_label[train_mask])
         opt.zero_grad()
         loss.backward()

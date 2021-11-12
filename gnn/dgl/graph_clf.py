@@ -3,12 +3,11 @@
 https://docs.dgl.ai/en/latest/guide/training-graph.html
 """
 import dgl
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from dgl.dataloading import GraphDataLoader
 from dgl.nn import GraphConv
-from torch.utils.data import DataLoader
 
 
 class Classifier(nn.Module):
@@ -30,23 +29,14 @@ class Classifier(nn.Module):
             return self.classify(hg)
 
 
-def collate(samples):
-    graphs, labels = map(list, zip(*samples))
-    batched_graph = dgl.batch(graphs)
-    batched_labels = torch.tensor(labels)
-    return batched_graph, batched_labels
-
-
 def main():
     dataset = dgl.data.GINDataset('MUTAG', False)
-    dataloader = DataLoader(
-        dataset, batch_size=32, shuffle=True, collate_fn=collate, drop_last=False
-    )
+    dataloader = GraphDataLoader(dataset, batch_size=32, shuffle=True)
 
     model = Classifier(dataset.dim_nfeats, 20, dataset.gclasses)
     opt = optim.Adam(model.parameters())
 
-    for epoch in range(20):
+    for epoch in range(5):
         for batched_graph, labels in dataloader:
             feats = batched_graph.ndata['attr'].float()
             logits = model(batched_graph, feats)

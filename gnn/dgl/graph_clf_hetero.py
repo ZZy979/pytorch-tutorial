@@ -2,17 +2,17 @@
 
 https://docs.dgl.ai/en/latest/guide/training-graph.html
 """
+import random
+
 import dgl
-import numpy as np
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.data import DGLDataset
-from torch.utils.data import DataLoader
+from dgl.dataloading import GraphDataLoader
 
-from gnn.dgl.graph_clf import collate
-from gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.data import UserItemDataset as UserItemOneGraphDataset
+from gnn.dgl.node_clf_hetero import RGCN
 
 
 class HeteroClassifier(nn.Module):
@@ -23,8 +23,7 @@ class HeteroClassifier(nn.Module):
         self.classify = nn.Linear(hidden_dim, n_classes)
 
     def forward(self, g):
-        h = g.ndata['feature']
-        h = self.rgcn(g, h)
+        h = self.rgcn(g, g.ndata['feat'])
         with g.local_scope():
             g.ndata['h'] = h
             # Calculate graph representation by average readout.
@@ -39,25 +38,24 @@ class UserItemDataset(DGLDataset):
     def __init__(self):
         self.graphs = []
         self.labels = []
-        self.dim_nfeats = 10
-        self.gclasses = 3
+        self.n_features = 10
+        self.num_classes = 3
         super().__init__('user-item')
 
     def process(self):
-        torch.manual_seed(42)
-        np.random.seed(42)
+        random.seed(42)
         # 随机构造，无实际意义
         for i in range(100):
-            g = build_user_item_graph(
-                n_users=torch.randint(5, 10, (1,)).item(),
-                n_items=torch.randint(5, 10, (1,)).item(),
-                n_follows=torch.randint(10, 20, (1,)).item(),
-                n_clicks=torch.randint(10, 20, (1,)).item(),
-                n_dislikes=torch.randint(10, 20, (1,)).item(),
-                n_features=self.dim_nfeats
-            )
+            g = UserItemOneGraphDataset(
+                n_users=random.randint(5, 10),
+                n_items=random.randint(5, 10),
+                n_follows=random.randint(10, 20),
+                n_clicks=random.randint(10, 20),
+                n_dislikes=random.randint(10, 20),
+                n_features=self.n_features
+            )[0]
             self.graphs.append(g)
-            self.labels.append(torch.randint(self.gclasses, (1,)))
+            self.labels.append(random.randrange(self.num_classes))
 
     def __getitem__(self, idx):
         return self.graphs[idx], self.labels[idx]
@@ -68,11 +66,9 @@ class UserItemDataset(DGLDataset):
 
 def main():
     dataset = UserItemDataset()
-    dataloader = DataLoader(
-        dataset, batch_size=32, shuffle=True, collate_fn=collate, drop_last=False
-    )
+    dataloader = GraphDataLoader(dataset, batch_size=32, shuffle=True)
 
-    model = HeteroClassifier(dataset.dim_nfeats, 20, dataset.gclasses, dataset[0][0].etypes)
+    model = HeteroClassifier(dataset.n_features, 20, dataset.num_classes, dataset[0][0].etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(5):

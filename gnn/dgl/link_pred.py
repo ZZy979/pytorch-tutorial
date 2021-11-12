@@ -3,11 +3,11 @@
 https://docs.dgl.ai/en/latest/guide/training-link.html
 """
 import dgl
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from gnn.data import RandomGraphDataset
 from gnn.dgl.edge_clf import DotProductPredictor
 from gnn.dgl.node_clf import SAGE
 
@@ -38,14 +38,9 @@ def compute_loss(pos_score, neg_score):
 
 
 def main():
-    src = np.random.randint(0, 100, 500)
-    dst = np.random.randint(0, 100, 500)
-    # make it symmetric
-    graph = dgl.graph((np.concatenate([src, dst]), np.concatenate([dst, src])))
-    # synthetic node and edge features, as well as edge labels
-    graph.ndata['feat'] = torch.randn(100, 10)
-
-    node_features = graph.ndata['feat']
+    data = RandomGraphDataset(100, 500, 10)
+    g = data[0]
+    node_features = g.ndata['feat']
     n_features = node_features.shape[1]
     k = 5
 
@@ -53,8 +48,8 @@ def main():
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):
-        negative_graph = construct_negative_graph(graph, k)
-        pos_score, neg_score = model(graph, negative_graph, node_features)
+        negative_graph = construct_negative_graph(g, k)
+        pos_score, neg_score = model(g, negative_graph, node_features)
         loss = compute_loss(pos_score, neg_score)
         opt.zero_grad()
         loss.backward()

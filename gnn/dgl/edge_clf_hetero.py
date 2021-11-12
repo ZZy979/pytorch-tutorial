@@ -8,7 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.dgl.node_clf_hetero import RGCN, build_user_item_graph
+from gnn.data import UserItemDataset
+from gnn.dgl.node_clf_hetero import RGCN
 
 
 class HeteroDotProductPredictor(nn.Module):
@@ -28,9 +29,7 @@ class HeteroMLPPredictor(nn.Module):
         self.W = nn.Linear(in_features * 2, out_classes)
 
     def apply_edges(self, edges):
-        h_u = edges.src['h']
-        h_v = edges.dst['h']
-        score = self.W(torch.cat([h_u, h_v], 1))
+        score = self.W(torch.cat([edges.src['h'], edges.dst['h']], dim=1))
         return {'score': score}
 
     def forward(self, graph, h, etype):
@@ -45,28 +44,27 @@ class Model(nn.Module):
 
     def __init__(self, in_features, hidden_features, out_features, rel_names):
         super().__init__()
-        self.sage = RGCN(in_features, hidden_features, out_features, rel_names)
+        self.rgcn = RGCN(in_features, hidden_features, out_features, rel_names)
         self.pred = HeteroDotProductPredictor()
 
     def forward(self, g, x, etype):
-        h = self.sage(g, x)
+        h = self.rgcn(g, x)
         return self.pred(g, h, etype)
 
 
 def main():
-    g = build_user_item_graph()
-    user_feats = g.nodes['user'].data['feature']
-    item_feats = g.nodes['item'].data['feature']
-    node_features = {'user': user_feats, 'item': item_feats}
+    data = UserItemDataset()
+    g = data[0]
+    in_feats = g.nodes['user'].data['feat'].shape[1]
     labels = g.edges['click'].data['label'].float()
     train_mask = g.edges['click'].data['train_mask']
 
-    model = Model(user_feats.shape[1], 20, 5, g.etypes)
+    model = Model(in_feats, 20, 5, g.etypes)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(10):
-        pred = model(g, node_features, 'click')
-        loss = F.mse_loss(pred[train_mask][:, 0], labels[train_mask])
+        pred = model(g, g.ndata['feat'], 'click')
+        loss = F.mse_loss(pred[train_mask].squeeze(dim=1), labels[train_mask])
         opt.zero_grad()
         loss.backward()
         opt.step()
