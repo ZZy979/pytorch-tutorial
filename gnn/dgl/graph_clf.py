@@ -7,21 +7,20 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.dataloading import GraphDataLoader
-from dgl.nn import GraphConv
+
+from gnn.dgl.model import GCNFull
 
 
-class Classifier(nn.Module):
+class Model(nn.Module):
 
     def __init__(self, in_dim, hidden_dim, n_classes):
-        super(Classifier, self).__init__()
-        self.conv1 = GraphConv(in_dim, hidden_dim)
-        self.conv2 = GraphConv(hidden_dim, hidden_dim)
+        super().__init__()
+        self.gcn = GCNFull(in_dim, hidden_dim, hidden_dim)
         self.classify = nn.Linear(hidden_dim, n_classes)
 
     def forward(self, g, h):
         # Apply graph convolution and activation.
-        h = F.relu(self.conv1(g, h))
-        h = F.relu(self.conv2(g, h))
+        h = self.gcn(g, h)
         with g.local_scope():
             g.ndata['h'] = h
             # Calculate graph representation by average readout.
@@ -33,7 +32,7 @@ def main():
     dataset = dgl.data.GINDataset('MUTAG', False)
     dataloader = GraphDataLoader(dataset, batch_size=32, shuffle=True)
 
-    model = Classifier(dataset.dim_nfeats, 20, dataset.gclasses)
+    model = Model(dataset.dim_nfeats, 20, dataset.gclasses)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(5):

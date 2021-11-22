@@ -9,7 +9,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from dgl.nn import GraphConv
+
+from gnn.dgl.model import GCNFull
 
 
 def build_karate_club_graph():
@@ -33,20 +34,6 @@ def draw_graph(g):
     pos = nx.kamada_kawai_layout(nx_g)
     nx.draw(nx_g, pos, with_labels=True, node_color=[[.7, .7, .7]])
     plt.show()
-
-
-class GCN(nn.Module):
-
-    def __init__(self, in_feats, hidden_size, num_classes):
-        super().__init__()
-        self.conv1 = GraphConv(in_feats, hidden_size)
-        self.conv2 = GraphConv(hidden_size, num_classes)
-
-    def forward(self, g, inputs):
-        h = self.conv1(g, inputs)
-        h = F.relu(h)
-        h = self.conv2(g, h)
-        return h
 
 
 def draw(i, g, ax, all_logits):
@@ -82,7 +69,7 @@ def main():
     # Step 3: Define a Graph Convolutional Network (GCN)
     # input feature size of 5 -> hidden size of 5
     # -> output feature size of 2 <=> 2 groups of the karate club
-    net = GCN(5, 5, 2)
+    net = GCNFull(5, 5, 2)
 
     # Step 4: Data preparation and initialization
     inputs = embed.weight

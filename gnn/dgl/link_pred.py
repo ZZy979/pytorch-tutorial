@@ -8,8 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from gnn.data import RandomGraphDataset
-from gnn.dgl.edge_clf import DotProductPredictor
-from gnn.dgl.node_clf import SAGE
+from gnn.dgl.model import SAGEFull, DotProductPredictor, MarginLoss
 
 
 def construct_negative_graph(graph, k):
@@ -23,18 +22,12 @@ class Model(nn.Module):
 
     def __init__(self, in_features, hidden_features, out_features):
         super().__init__()
-        self.sage = SAGE(in_features, hidden_features, out_features)
+        self.sage = SAGEFull(in_features, hidden_features, out_features)
         self.pred = DotProductPredictor()
 
     def forward(self, g, neg_g, x):
         h = self.sage(g, x)
         return self.pred(g, h), self.pred(neg_g, h)
-
-
-def compute_loss(pos_score, neg_score):
-    # Margin loss
-    n_edges = pos_score.shape[0]
-    return (1 - neg_score.view(n_edges, -1) + pos_score.unsqueeze(1)).clamp(min=0).mean()
 
 
 def main():
@@ -46,11 +39,12 @@ def main():
 
     model = Model(n_features, 100, 100)
     opt = optim.Adam(model.parameters())
+    loss_func = MarginLoss()
 
     for epoch in range(10):
         negative_graph = construct_negative_graph(g, k)
         pos_score, neg_score = model(g, negative_graph, node_features)
-        loss = compute_loss(pos_score, neg_score)
+        loss = loss_func(pos_score, neg_score)
         opt.zero_grad()
         loss.backward()
         opt.step()

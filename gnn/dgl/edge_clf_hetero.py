@@ -2,49 +2,19 @@
 
 https://docs.dgl.ai/en/latest/guide/training-edge.html
 """
-import dgl.function as fn
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
 from gnn.data import UserItemDataset
-from gnn.dgl.node_clf_hetero import RGCN
-
-
-class HeteroDotProductPredictor(nn.Module):
-
-    def forward(self, graph, h, etype):
-        # h contains the node representations for each edge type computed from node_clf_hetero.py
-        with graph.local_scope():
-            graph.ndata['h'] = h  # assigns 'h' of all node types in one shot
-            graph.apply_edges(fn.u_dot_v('h', 'h', 'score'), etype=etype)
-            return graph.edges[etype].data['score']
-
-
-class HeteroMLPPredictor(nn.Module):
-
-    def __init__(self, in_features, out_classes):
-        super().__init__()
-        self.W = nn.Linear(in_features * 2, out_classes)
-
-    def apply_edges(self, edges):
-        score = self.W(torch.cat([edges.src['h'], edges.dst['h']], dim=1))
-        return {'score': score}
-
-    def forward(self, graph, h, etype):
-        # h contains the node representations for each edge type computed from node_clf_hetero.py
-        with graph.local_scope():
-            graph.ndata['h'] = h  # assigns 'h' of all node types in one shot
-            graph.apply_edges(self.apply_edges, etype=etype)
-            return graph.edges[etype].data['score']
+from gnn.dgl.model import RGCNFull, HeteroDotProductPredictor
 
 
 class Model(nn.Module):
 
     def __init__(self, in_features, hidden_features, out_features, rel_names):
         super().__init__()
-        self.rgcn = RGCN(in_features, hidden_features, out_features, rel_names)
+        self.rgcn = RGCNFull(in_features, hidden_features, out_features, rel_names)
         self.pred = HeteroDotProductPredictor()
 
     def forward(self, g, x, etype):

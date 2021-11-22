@@ -2,27 +2,12 @@
 
 https://docs.dgl.ai/en/latest/guide/training-node.html
 """
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.data import CiteseerGraphDataset
-from dgl.nn import SAGEConv
 
+from gnn.dgl.model import SAGEFull
 from gnn.utils import accuracy
-
-
-class SAGE(nn.Module):
-
-    def __init__(self, in_feats, hid_feats, out_feats):
-        super().__init__()
-        self.conv1 = SAGEConv(in_feats, hid_feats, 'mean')
-        self.conv2 = SAGEConv(hid_feats, out_feats, 'mean')
-
-    def forward(self, graph, inputs):
-        # inputs are features of nodes
-        h = F.relu(self.conv1(graph, inputs))
-        h = self.conv2(graph, h)
-        return h
 
 
 def main():
@@ -40,7 +25,7 @@ def main():
     valid_mask = g.ndata['val_mask']
     test_mask = g.ndata['test_mask']
 
-    model = SAGE(in_feats=n_features, hid_feats=100, out_feats=n_labels)
+    model = SAGEFull(in_feats=n_features, hid_feats=100, out_feats=n_labels)
     opt = optim.Adam(model.parameters())
 
     for epoch in range(30):

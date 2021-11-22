@@ -12,14 +12,14 @@ from dgl.data import DGLDataset
 from dgl.dataloading import GraphDataLoader
 
 from gnn.data import UserItemDataset as UserItemOneGraphDataset
-from gnn.dgl.node_clf_hetero import RGCN
+from gnn.dgl.model import RGCNFull
 
 
 class HeteroClassifier(nn.Module):
 
     def __init__(self, in_dim, hidden_dim, n_classes, rel_names):
         super().__init__()
-        self.rgcn = RGCN(in_dim, hidden_dim, hidden_dim, rel_names)
+        self.rgcn = RGCNFull(in_dim, hidden_dim, hidden_dim, rel_names)
         self.classify = nn.Linear(hidden_dim, n_classes)
 
     def forward(self, g):
@@ -27,9 +27,7 @@ class HeteroClassifier(nn.Module):
         with g.local_scope():
             g.ndata['h'] = h
             # Calculate graph representation by average readout.
-            hg = 0
-            for ntype in g.ntypes:
-                hg += dgl.mean_nodes(g, 'h', ntype=ntype)
+            hg = sum(dgl.mean_nodes(g, 'h', ntype=ntype) for ntype in g.ntypes)
             return F.softmax(self.classify(hg), dim=0)
 
 

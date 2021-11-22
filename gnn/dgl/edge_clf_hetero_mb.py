@@ -8,8 +8,7 @@ import torch.optim as optim
 from dgl.dataloading import MultiLayerFullNeighborSampler, EdgeDataLoader
 
 from gnn.data import UserItemDataset
-from gnn.dgl.edge_clf_hetero import HeteroDotProductPredictor
-from gnn.dgl.node_clf_hetero_mb import RGCN
+from gnn.dgl.model import RGCN, HeteroDotProductPredictor
 
 
 class Model(nn.Module):

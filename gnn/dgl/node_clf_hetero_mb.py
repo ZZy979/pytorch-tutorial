@@ -3,31 +3,12 @@
 https://docs.dgl.ai/en/latest/guide/minibatch-node.html
 """
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from dgl.dataloading import MultiLayerFullNeighborSampler, NodeDataLoader
-from dgl.nn import HeteroGraphConv, GraphConv
 
 from gnn.data import UserItemDataset
-
-
-class RGCN(nn.Module):
-
-    def __init__(self, in_feats, hid_feats, out_feats, rel_names):
-        super().__init__()
-        self.conv1 = HeteroGraphConv({
-            rel: GraphConv(in_feats, hid_feats) for rel in rel_names
-        }, aggregate='sum')
-        self.conv2 = HeteroGraphConv({
-            rel: GraphConv(hid_feats, out_feats) for rel in rel_names
-        }, aggregate='sum')
-
-    def forward(self, blocks, inputs):
-        h = self.conv1(blocks[0], inputs)
-        h = {k: F.relu(v) for k, v in h.items()}
-        h = self.conv2(blocks[1], h)
-        return h
+from gnn.dgl.model import RGCN
 
 
 def main():

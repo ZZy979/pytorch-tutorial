@@ -9,8 +9,7 @@ import torch.optim as optim
 from dgl.dataloading import MultiLayerFullNeighborSampler, EdgeDataLoader
 
 from gnn.data import RandomGraphDataset
-from gnn.dgl.edge_clf import MLPPredictor
-from gnn.dgl.node_clf_mb import GCN
+from gnn.dgl.model import GCN, MLPPredictor
 
 
 class Model(nn.Module):

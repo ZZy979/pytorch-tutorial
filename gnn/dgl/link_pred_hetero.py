@@ -8,9 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from gnn.data import UserItemDataset
-from gnn.dgl.edge_clf_hetero import HeteroDotProductPredictor
-from gnn.dgl.link_pred import compute_loss
-from gnn.dgl.node_clf_hetero import RGCN
+from gnn.dgl.model import RGCNFull, HeteroDotProductPredictor, MarginLoss
 
 
 def construct_negative_graph(graph, k, etype):
@@ -28,7 +26,7 @@ class Model(nn.Module):
 
     def __init__(self, in_features, hidden_features, out_features, rel_names):
         super().__init__()
-        self.rgcn = RGCN(in_features, hidden_features, out_features, rel_names)
+        self.rgcn = RGCNFull(in_features, hidden_features, out_features, rel_names)
         self.pred = HeteroDotProductPredictor()
 
     def forward(self, g, neg_g, x, etype):
@@ -44,13 +42,14 @@ def main():
 
     model = Model(in_feats, 20, 5, g.etypes)
     opt = optim.Adam(model.parameters())
+    loss_func = MarginLoss()
 
     for epoch in range(10):
         negative_graph = construct_negative_graph(g, k, ('user', 'click', 'item'))
         pos_score, neg_score = model(
             g, negative_graph, g.ndata['feat'], ('user', 'click', 'item')
         )
-        loss = compute_loss(pos_score, neg_score)
+        loss = loss_func(pos_score, neg_score)
         opt.zero_grad()
         loss.backward()
         opt.step()

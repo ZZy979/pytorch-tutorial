@@ -9,9 +9,7 @@ from dgl.dataloading import MultiLayerFullNeighborSampler, EdgeDataLoader
 from dgl.dataloading.negative_sampler import Uniform
 
 from gnn.data import RandomGraphDataset
-from gnn.dgl.edge_clf import DotProductPredictor
-from gnn.dgl.link_pred import compute_loss
-from gnn.dgl.node_clf_mb import GCN
+from gnn.dgl.model import GCN, DotProductPredictor, MarginLoss
 
 
 class Model(nn.Module):
@@ -37,13 +35,14 @@ def main():
 
     model = Model(10, 100, 10)
     optimizer = optim.Adam(model.parameters())
+    loss_func = MarginLoss()
 
     for epoch in range(10):
         model.train()
         losses = []
         for input_nodes, pos_g, neg_g, blocks in dataloader:
             pos_score, neg_score = model(pos_g, neg_g, blocks, blocks[0].srcdata['feat'])
-            loss = compute_loss(pos_score, neg_score)
+            loss = loss_func(pos_score, neg_score)
             losses.append(loss.item())
             optimizer.zero_grad()
             loss.backward()
