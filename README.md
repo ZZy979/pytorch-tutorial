@@ -89,6 +89,12 @@
 [论文链接](https://arxiv.org/pdf/2105.09111)
 | [官方代码](https://github.com/liun-online/HeCo)
 
+## kgrec - 基于知识图谱的推荐算法
+* kgcn - Knowledge Graph Convolutional Networks for Recommender Systems (KGCN)
+[论文链接](https://arxiv.org/pdf/1904.12575)
+| [官方代码](https://github.com/hwwang55/KGCN)
+| [PyTorch实现](https://github.com/zzaebok/KGCN-pytorch)
+
 ## nlp - 自然语言处理
 ### tfms - [transformers官方示例](https://huggingface.co/transformers/)
 * seq_clf_pipeline.py, seq_clf_model.py - [语义分析](https://huggingface.co/transformers/task_summary.html#sequence-classification)
