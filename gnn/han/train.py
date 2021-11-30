@@ -5,7 +5,8 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.data import *
+from gnn.data import ACM3025Dataset, DBLP4057Dataset, IMDb5kDataset, ACMDataset, \
+    DBLPFourAreaDataset, IMDbDataset
 from gnn.han.model import HAN
 from gnn.utils import set_random_seed, micro_macro_f1_score, nmi_ari_score
 

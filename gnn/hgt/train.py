@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-from gnn.data import *
+from gnn.data import ACMDataset, IMDbDataset
 from gnn.hgt.model import HGT
 from gnn.utils import set_random_seed, micro_macro_f1_score
 

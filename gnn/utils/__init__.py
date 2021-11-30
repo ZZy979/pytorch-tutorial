@@ -1,10 +1,14 @@
+import random
+
+import dgl
 import numpy as np
+import torch
 
 from .data import *
 from .metapath import *
 from .metrics import *
 from .neg_sampler import *
-from .random_walk import metapath_random_walk
+from .random_walk import *
 
 
 def set_random_seed(seed):

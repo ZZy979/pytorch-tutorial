@@ -3,6 +3,8 @@ from collections import defaultdict
 import dgl
 import torch
 
+__all__ = ['metapath_based_graph']
+
 
 def metapath_based_graph(g, metapath, nids=None, edge_feat_name='inst'):
     """返回异构图基于给定元路径的邻居组成的图，元路径实例作为边特征，如果元路径是对称的则返回的是同构图，否则是二分图。

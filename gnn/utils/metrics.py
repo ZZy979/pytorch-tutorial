@@ -2,6 +2,8 @@ import torch
 from sklearn.cluster import KMeans
 from sklearn.metrics import f1_score, normalized_mutual_info_score, adjusted_rand_score
 
+__all__ = ['accuracy', 'micro_macro_f1_score', 'nmi_ari_score', 'mean_reciprocal_rank', 'hits_at']
+
 
 def accuracy(logits, labels):
     """计算准确率

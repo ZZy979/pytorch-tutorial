@@ -3,6 +3,8 @@ from dgl.sampling import random_walk
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+__all__ = ['metapath_random_walk']
+
 
 def metapath_random_walk(g, metapaths, num_walks, walk_length, output_file):
     """基于元路径的随机游走

@@ -3,6 +3,11 @@ from dgl.data import citation_graph, rdf, knowledge_graph
 from dgl.utils import extract_node_subframes, set_new_frames
 from sklearn.model_selection import train_test_split
 
+__all__ = [
+    'load_citation_dataset', 'load_rdf_dataset', 'load_kg_dataset',
+    'split_idx', 'add_reverse_edges'
+]
+
 
 def load_citation_dataset(name):
     m = {

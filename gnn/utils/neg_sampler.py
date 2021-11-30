@@ -3,6 +3,8 @@ import random
 import torch
 from dgl.dataloading.negative_sampler import _BaseNegativeSampler
 
+__all__ = ['RatioNegativeSampler']
+
 
 class RatioNegativeSampler(_BaseNegativeSampler):
 
